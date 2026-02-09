@@ -1,5 +1,5 @@
 import type { GameState } from '../types';
-import { ALL_ACTION_DEFS } from './actions';
+import { ALL_ACTION_DEFS, isStudyAction } from './actions';
 import { canExecuteAction, executeAction } from './actions';
 
 export function updateTimedActions(state: GameState, _delta: number): Partial<GameState> {
@@ -41,14 +41,22 @@ export function toggleTimedAction(state: GameState, actionId: string): Partial<G
   if (!actionState) return {};
 
   const newState = !actionState.isActive;
-  return {
-    actions: {
-      ...state.actions,
-      [actionId]: {
-        ...actionState,
-        isActive: newState,
-        lastExecution: newState ? Date.now() : actionState.lastExecution,
-      },
-    },
+  const updates: Partial<GameState> = { actions: { ...state.actions } };
+
+  // If activating a non-study timed action, deactivate any active study actions
+  if (newState && !isStudyAction(actionId)) {
+    for (const [id, s] of Object.entries(state.actions)) {
+      if (isStudyAction(id) && s.isActive) {
+        updates.actions![id] = { ...s, isActive: false };
+      }
+    }
+  }
+
+  updates.actions![actionId] = {
+    ...actionState,
+    isActive: newState,
+    lastExecution: newState ? Date.now() : actionState.lastExecution,
   };
+
+  return updates;
 }

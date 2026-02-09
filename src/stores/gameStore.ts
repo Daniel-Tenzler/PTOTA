@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { GameState } from '../types';
 import { ALL_ACTION_DEFS } from '../systems/actions';
-import { canExecuteAction, executeAction as executeActionSystem } from '../systems/actions';
+import { canExecuteAction, executeAction as executeActionSystem, toggleStudyAction as toggleStudyActionSystem } from '../systems/actions';
 import { toggleTimedAction } from '../systems/timedActions';
 import { loadGame } from './saveStore';
 import { mergeGameState } from '../utils/mergeUtils';
@@ -42,6 +42,11 @@ const DEFAULT_STATE: GameState = {
     'gather-ash': { executionCount: 0, isUnlocked: false, isActive: false, lastExecution: 0 },
     'collect-spring-water': { executionCount: 0, isUnlocked: false, isActive: false, lastExecution: 0 },
     'mine-ore': { executionCount: 0, isUnlocked: false, isActive: false, lastExecution: 0 },
+    // Study actions (hidden from ActionsView)
+    'study-arcane': { executionCount: 0, isUnlocked: true, isActive: false, lastExecution: 0 },
+    'study-pyromancy': { executionCount: 0, isUnlocked: true, isActive: false, lastExecution: 0 },
+    'study-hydromancy': { executionCount: 0, isUnlocked: true, isActive: false, lastExecution: 0 },
+    'study-geomancy': { executionCount: 0, isUnlocked: true, isActive: false, lastExecution: 0 },
   },
   skills: {
     arcane: { level: 1, experience: 0 },
@@ -78,6 +83,7 @@ interface GameStore extends GameState {
   update: (delta: number, timestamp: number) => void;
   executeAction: (actionId: string) => void;
   toggleTimedAction: (actionId: string) => void;
+  toggleStudyAction: (actionId: string) => void;
   updateCombat: (updater: (state: GameState) => Partial<GameState>) => void;
   setActiveTab: (tab: 'actions' | 'skills' | 'spells' | 'combat') => void;
   equipSpell: (spellId: string) => void;
@@ -102,6 +108,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
   toggleTimedAction: (actionId: string) => {
     const state = get();
     const updates = toggleTimedAction(state, actionId);
+    set(mergeGameState(state, updates));
+  },
+  toggleStudyAction: (actionId: string) => {
+    const state = get();
+    const updates = toggleStudyActionSystem(state, actionId);
     set(mergeGameState(state, updates));
   },
   updateCombat: (updater) => {

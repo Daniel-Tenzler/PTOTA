@@ -58,3 +58,46 @@ export const ACTION_DEFS: Record<string, ActionDefinition> = {
     rankBonus: standardRankBonus,
   },
 };
+
+export const STUDY_ACTIONS: Record<string, ActionDefinition> = {
+  'study-arcane': {
+    id: 'study-arcane',
+    name: 'Study Arcane',
+    category: 'timed',
+    inputs: {},
+    outputs: {},
+    duration: 1,
+    skillXp: { arcane: 1 },
+    rankBonus: () => 0,
+  },
+  'study-pyromancy': {
+    id: 'study-pyromancy',
+    name: 'Study Pyromancy',
+    category: 'timed',
+    inputs: {},
+    outputs: {},
+    duration: 1,
+    skillXp: { pyromancy: 1 },
+    rankBonus: () => 0,
+  },
+  'study-hydromancy': {
+    id: 'study-hydromancy',
+    name: 'Study Hydromancy',
+    category: 'timed',
+    inputs: {},
+    outputs: {},
+    duration: 1,
+    skillXp: { hydromancy: 1 },
+    rankBonus: () => 0,
+  },
+  'study-geomancy': {
+    id: 'study-geomancy',
+    name: 'Study Geomancy',
+    category: 'timed',
+    inputs: {},
+    outputs: {},
+    duration: 1,
+    skillXp: { geomancy: 1 },
+    rankBonus: () => 0,
+  },
+};

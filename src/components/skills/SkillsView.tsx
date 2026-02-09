@@ -5,6 +5,8 @@ import { useTooltip, skillRenderer } from '../tooltip';
 
 export function SkillsView() {
   const skills = useGameStore((s) => s.skills);
+  const actions = useGameStore((s) => s.actions);
+  const toggleStudyAction = useGameStore((s) => s.toggleStudyAction);
 
   return (
     <div>
@@ -15,6 +17,16 @@ export function SkillsView() {
           if (!def) return null;
 
           const progress = getSkillProgress(skill, def);
+          const studyActionId = `study-${skillId}`;
+          const isStudyActive = actions[studyActionId]?.isActive ?? false;
+          const isMaxLevel = skill.level >= def.xpTable.length;
+
+          const handleClick = () => {
+            if (!isMaxLevel) {
+              toggleStudyAction(studyActionId);
+            }
+          };
+
           const { triggerProps, tooltipElement } = useTooltip(
             skillRenderer,
             {
@@ -24,7 +36,14 @@ export function SkillsView() {
           );
 
           return (
-            <div key={skillId} {...triggerProps} className="bg-gray-800 p-4 rounded cursor-pointer hover:bg-gray-700">
+            <div
+              key={skillId}
+              {...triggerProps}
+              onClick={handleClick}
+              className={`bg-gray-800 p-4 rounded hover:bg-gray-700 ${
+                isStudyActive ? 'bg-gray-600 hover:bg-gray-600' : ''
+              } ${!isMaxLevel ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}`}
+            >
               <div className="flex justify-between mb-2">
                 <span className="text-gray-100">{def.name}</span>
                 <span className="text-gray-400">Level {skill.level}</span>

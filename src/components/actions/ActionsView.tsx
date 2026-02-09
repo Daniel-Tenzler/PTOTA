@@ -1,6 +1,6 @@
 import { ActionButton } from './ActionButton';
 import { useGameStore } from '../../stores/gameStore';
-import { ALL_ACTION_DEFS } from '../../systems/actions';
+import { ALL_ACTION_DEFS, isStudyAction } from '../../systems/actions';
 
 export function ActionsView() {
   const actions = useGameStore((s) => Object.keys(s.actions));
@@ -11,13 +11,13 @@ export function ActionsView() {
   const resourceActions = actions.filter(id => {
     const def = ALL_ACTION_DEFS[id];
     const state = actionStates[id];
-    return def?.category === 'resource-producing' && state?.isUnlocked;
+    return !isStudyAction(id) && def?.category === 'resource-producing' && state?.isUnlocked;
   });
 
   const timedActions = actions.filter(id => {
     const def = ALL_ACTION_DEFS[id];
     const state = actionStates[id];
-    return def?.category === 'timed' && state?.isUnlocked;
+    return !isStudyAction(id) && def?.category === 'timed' && state?.isUnlocked;
   });
 
   const unlockActions = actions.filter(id => {

@@ -1,11 +1,20 @@
 import type { GameState, ActionDefinition, ActionState } from '../types';
-import { ACTION_DEFS } from '../data/actions';
+import { ACTION_DEFS, STUDY_ACTIONS } from '../data/actions';
 import { UNLOCK_ACTION_DEFS } from '../data/unlockActions';
 import { TIMED_ACTION_DEFS } from '../data/timedActions';
+import { SKILL_DEFS } from '../data/skills';
 import { canExecuteUnlockAction, executeUnlockAction as execUnlock } from './unlockActions';
 
 // Merge all action definitions
-export const ALL_ACTION_DEFS = { ...ACTION_DEFS, ...UNLOCK_ACTION_DEFS, ...TIMED_ACTION_DEFS };
+export const ALL_ACTION_DEFS = { ...ACTION_DEFS, ...UNLOCK_ACTION_DEFS, ...TIMED_ACTION_DEFS, ...STUDY_ACTIONS };
+
+/**
+ * Helper function to check if an action is a study action.
+ * Study actions are identified by the 'study-' prefix in their ID.
+ */
+export function isStudyAction(actionId: string): boolean {
+  return actionId.startsWith('study-');
+}
 
 export function canExecuteAction(
   state: GameState,
@@ -45,6 +54,20 @@ export function canExecuteAction(
     const skill = state.skills[definition.requiredSkill.skillId];
     if (!skill || skill.level < definition.requiredSkill.level) {
       return false;
+    }
+  }
+
+  // Check if study action target skill is at max level
+  if (isStudyAction(actionId) && definition.skillXp) {
+    const skillIds = Object.keys(definition.skillXp);
+    if (skillIds.length > 0) {
+      const skillId = skillIds[0];
+      const skillDef = SKILL_DEFS[skillId];
+      const skillState = state.skills[skillId];
+
+      if (skillDef && skillState && skillState.level >= skillDef.xpTable.length) {
+        return false;
+      }
     }
   }
 
@@ -140,6 +163,41 @@ export function executeAction(
       executionCount: actionState.executionCount + 1,
       lastExecution: Date.now(),
     },
+  };
+
+  return updates;
+}
+
+export function toggleStudyAction(state: GameState, actionId: string): Partial<GameState> {
+  const activeStudyId = Object.entries(state.actions)
+    .find(([id, s]) => isStudyAction(id) && s.isActive)?.[0];
+
+  const updates: Partial<GameState> = { actions: { ...state.actions } };
+
+  // If clicking same active study, turn it off
+  if (activeStudyId === actionId && state.actions[actionId].isActive) {
+    updates.actions![actionId] = { ...state.actions[actionId], isActive: false };
+    return updates;
+  }
+
+  // Deactivate previous study if exists
+  if (activeStudyId) {
+    updates.actions![activeStudyId] = { ...state.actions[activeStudyId], isActive: false };
+  }
+
+  // When activating a study action, deactivate any active non-study timed actions
+  if (!state.actions[actionId].isActive) {
+    for (const [id, def] of Object.entries(ALL_ACTION_DEFS)) {
+      if (def.category === 'timed' && !isStudyAction(id) && state.actions[id]?.isActive) {
+        updates.actions![id] = { ...state.actions[id], isActive: false };
+      }
+    }
+  }
+
+  // Toggle the new one
+  updates.actions![actionId] = {
+    ...state.actions[actionId],
+    isActive: !state.actions[actionId].isActive,
   };
 
   return updates;

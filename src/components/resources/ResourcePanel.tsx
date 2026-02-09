@@ -1,4 +1,6 @@
 import { useGameStore } from '../../stores/gameStore';
+import { isStudyAction, ALL_ACTION_DEFS } from '../../systems/actions';
+import { SKILL_DEFS } from '../../data/skills';
 
 // Define display order for resources. Any resource added to the store
 // will automatically appear here - order is controlled by this list.
@@ -23,11 +25,20 @@ export function ResourcePanel() {
   const resources = useGameStore((s) => s.resources);
   const stamina = useGameStore((s) => s.specialResources.stamina);
   const health = useGameStore((s) => s.specialResources.health);
+  const actions = useGameStore((s) => s.actions);
+
+  // Find all active timed actions (study + regular)
+  const activeTimedActionIds = Object.entries(actions)
+    .filter(([id, state]) => {
+      const def = ALL_ACTION_DEFS[id];
+      return def?.category === 'timed' && state.isActive;
+    })
+    .map(([id]) => id);
 
   // Get all resource IDs, ordered by RESOURCE_ORDER preference, then any extras
   const resourceIds = Object.keys(resources).sort((a, b) => {
-    const aIndex = RESOURCE_ORDER.indexOf(a as any);
-    const bIndex = RESOURCE_ORDER.indexOf(b as any);
+    const aIndex = RESOURCE_ORDER.indexOf(a as typeof RESOURCE_ORDER[number]);
+    const bIndex = RESOURCE_ORDER.indexOf(b as typeof RESOURCE_ORDER[number]);
     const aOrdered = aIndex !== -1;
     const bOrdered = bIndex !== -1;
 
@@ -51,6 +62,14 @@ export function ResourcePanel() {
         <SpecialResourceRow name="Stamina" {...stamina} />
         <SpecialResourceRow name="Health" {...health} />
       </div>
+
+      {activeTimedActionIds.length > 0 && (
+        <div className="mt-6 space-y-2">
+          {activeTimedActionIds.map((actionId) => (
+            <ActiveTimedActionDisplay key={actionId} actionId={actionId} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -79,6 +98,35 @@ function SpecialResourceRow({ name, current, max }: { name: string; current: num
           style={{ width: `${percent}%` }}
         />
       </div>
+    </div>
+  );
+}
+
+function ActiveTimedActionDisplay({ actionId }: { actionId: string }) {
+  const def = ALL_ACTION_DEFS[actionId];
+
+  if (!def) return null;
+
+  // For study actions, show "Studying [Skill Name]"
+  // For regular timed actions, show the action name
+  if (isStudyAction(actionId)) {
+    const skillId = actionId.replace('study-', '') as keyof typeof SKILL_DEFS;
+    const skillDef = SKILL_DEFS[skillId];
+
+    if (!skillDef) return null;
+
+    return (
+      <div className="text-sm">
+        <span className="text-gray-400">Active: </span>
+        <span className="text-gray-300">Studying {skillDef.name}</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="text-sm">
+      <span className="text-gray-400">Active: </span>
+      <span className="text-gray-300">{def.name}</span>
     </div>
   );
 }
