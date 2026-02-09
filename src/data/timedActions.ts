@@ -6,9 +6,9 @@ export const TIMED_ACTION_DEFS: Record<string, ActionDefinition> = {
     name: 'Meditate',
     category: 'timed',
     inputs: {},
-    outputs: { gold: 0.5 },
+    outputs: { stamina: 1 },
     staminaCost: 0,
-    duration: 3,
+    duration: 1,
     skillXp: { arcane: 0.5 },
     rankBonus: (n: number) => {
       if (n >= 50) return 0.15;

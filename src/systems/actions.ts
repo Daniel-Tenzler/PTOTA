@@ -94,11 +94,28 @@ export function executeAction(
   // Apply outputs with rank bonus
   for (const [resource, amount] of Object.entries(definition.outputs)) {
     const bonusAmount = amount * (1 + rankBonus);
-    const currentAmount = state.resources[resource] || 0;
-    updates.resources = {
-      ...updates.resources,
-      [resource]: currentAmount + bonusAmount,
-    };
+
+    // Handle stamina as a special resource
+    if (resource === 'stamina') {
+      const currentStamina = state.specialResources.stamina.current;
+      const maxStamina = state.specialResources.stamina.max;
+      const newStamina = Math.min(maxStamina, currentStamina + bonusAmount);
+      updates.specialResources = {
+        ...state.specialResources,
+        ...updates.specialResources,
+        stamina: {
+          ...state.specialResources.stamina,
+          current: newStamina,
+        },
+      };
+    } else {
+      // Regular resources
+      const currentAmount = state.resources[resource] || 0;
+      updates.resources = {
+        ...updates.resources,
+        [resource]: currentAmount + bonusAmount,
+      };
+    }
   }
 
   // Award skill XP

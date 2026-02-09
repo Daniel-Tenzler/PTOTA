@@ -40,6 +40,13 @@ export function useGameLoop() {
       if (actionUpdates.skills) {
         updates.skills = { ...state.skills, ...actionUpdates.skills };
       }
+      // Merge specialResources from timed actions with existing specialResources
+      if (actionUpdates.specialResources) {
+        updates.specialResources = {
+          ...(updates.specialResources || state.specialResources),
+          ...actionUpdates.specialResources,
+        };
+      }
 
       // Skills
       const skillUpdates = checkSkillLevelUps(state);
@@ -52,11 +59,27 @@ export function useGameLoop() {
 
       // Combat
       const combatUpdates = updateCombat(state, delta);
-      Object.assign(updates, combatUpdates);
+      if (combatUpdates.combat) {
+        updates.combat = { ...state.combat, ...combatUpdates.combat };
+      }
+      if (combatUpdates.resources) {
+        updates.resources = { ...updates.resources, ...combatUpdates.resources };
+      }
+      if (combatUpdates.specialResources) {
+        updates.specialResources = {
+          ...(updates.specialResources || state.specialResources),
+          ...combatUpdates.specialResources,
+        };
+      }
 
       // Spells
       const spellUpdates = updateSpells(state, delta);
-      Object.assign(updates, spellUpdates);
+      if (spellUpdates.combat) {
+        updates.combat = { ...(updates.combat || state.combat), ...spellUpdates.combat };
+      }
+      if (spellUpdates.spells) {
+        updates.spells = { ...state.spells, ...spellUpdates.spells };
+      }
 
       // Apply all updates at once
       useGameStore.setState(updates);

@@ -20,6 +20,9 @@ export function updateTimedActions(state: GameState, _delta: number): Partial<Ga
         updates.actions = { ...updates.actions, ...executionUpdates.actions };
         updates.resources = { ...updates.resources, ...executionUpdates.resources };
         updates.skills = { ...updates.skills, ...executionUpdates.skills };
+        if (executionUpdates.specialResources) {
+          updates.specialResources = { ...updates.specialResources, ...executionUpdates.specialResources };
+        }
       } else {
         // Can't execute anymore - deactivate
         updates.actions = {

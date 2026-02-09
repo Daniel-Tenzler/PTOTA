@@ -12,6 +12,10 @@ const DEFAULT_STATE: GameState = {
     gold: 0,
     scrolls: 0,
     'enchanted scrolls': 0,
+    // Elemental resources
+    ash: 0,
+    springWater: 0,
+    ore: 0,
   },
   specialResources: {
     stamina: {
@@ -33,9 +37,17 @@ const DEFAULT_STATE: GameState = {
     // Unlock actions (available but not unlocked - they're their own category)
     'learn-spellcasting': { executionCount: 0, isUnlocked: true, isActive: false, lastExecution: 0 },
     'unlock-enchanting': { executionCount: 0, isUnlocked: true, isActive: false, lastExecution: 0 },
+    // Elemental actions (locked until corresponding skill reaches level 2)
+    'gather-ash': { executionCount: 0, isUnlocked: false, isActive: false, lastExecution: 0 },
+    'collect-spring-water': { executionCount: 0, isUnlocked: false, isActive: false, lastExecution: 0 },
+    'mine-ore': { executionCount: 0, isUnlocked: false, isActive: false, lastExecution: 0 },
   },
   skills: {
     arcane: { level: 1, experience: 0 },
+    // Elemental magic disciplines
+    pyromancy: { level: 1, experience: 0 },
+    hydromancy: { level: 1, experience: 0 },
+    geomancy: { level: 1, experience: 0 },
   },
   spells: {
     slots: 1,
@@ -67,7 +79,7 @@ const INITIAL_STATE: GameState = SAVED_STATE ? {
     health: { ...DEFAULT_STATE.specialResources.health, ...(SAVED_STATE.specialResources?.health || {}) },
   },
   actions: { ...DEFAULT_STATE.actions, ...SAVED_STATE.actions },
-  skills: { ...DEFAULT_STATE.skills, ...SAVED_STATE.skills },
+  skills: { ...DEFAULT_STATE.skills, ...(SAVED_STATE.skills || {}) },
   spells: { ...DEFAULT_STATE.spells, ...SAVED_STATE.spells },
   combat: { ...DEFAULT_STATE.combat, ...SAVED_STATE.combat },
   dungeons: { ...DEFAULT_STATE.dungeons, ...SAVED_STATE.dungeons },
