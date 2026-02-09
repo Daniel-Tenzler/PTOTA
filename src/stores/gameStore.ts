@@ -1,10 +1,10 @@
 import { create } from 'zustand';
 import type { GameState } from '../types';
-import { ALL_ACTION_DEFS } from '../systems/actions';
-import { canExecuteAction, executeAction as executeActionSystem, toggleStudyAction as toggleStudyActionSystem } from '../systems/actions';
-import { toggleTimedAction } from '../systems/timedActions';
 import { loadGame } from './saveStore';
 import { mergeGameState } from '../utils/mergeUtils';
+import { createActionsSlice, type GameActionsSlice } from './slices/gameActionsSlice';
+import { createCombatSlice, type GameCombatSlice } from './slices/gameCombatSlice';
+import { createSpellsSlice, type GameSpellsSlice } from './slices/gameSpellsSlice';
 
 const SAVED_STATE = loadGame();
 
@@ -79,77 +79,20 @@ const INITIAL_STATE: GameState = SAVED_STATE
   ? mergeGameState(DEFAULT_STATE, SAVED_STATE)
   : DEFAULT_STATE;
 
-interface GameStore extends GameState {
+interface GameStore extends GameState, GameActionsSlice, GameCombatSlice, GameSpellsSlice {
   update: (delta: number, timestamp: number) => void;
-  executeAction: (actionId: string) => void;
-  toggleTimedAction: (actionId: string) => void;
-  toggleStudyAction: (actionId: string) => void;
-  updateCombat: (updater: (state: GameState) => Partial<GameState>) => void;
-  setActiveTab: (tab: 'actions' | 'skills' | 'spells' | 'combat') => void;
-  equipSpell: (spellId: string) => void;
-  unequipSpell: (spellId: string) => void;
 }
 
 export const useGameStore = create<GameStore>((set, get) => ({
   ...INITIAL_STATE,
+
+  // Game loop update method
   update: (_delta: number, _timestamp: number) => {
     // Will be populated by game loop later
   },
-  executeAction: (actionId: string) => {
-    const state = get();
-    const definition = ALL_ACTION_DEFS[actionId];
-    if (!definition) return;
 
-    if (canExecuteAction(state, actionId, definition)) {
-      const updates = executeActionSystem(state, actionId, definition);
-      set(mergeGameState(state, updates));
-    }
-  },
-  toggleTimedAction: (actionId: string) => {
-    const state = get();
-    const updates = toggleTimedAction(state, actionId);
-    set(mergeGameState(state, updates));
-  },
-  toggleStudyAction: (actionId: string) => {
-    const state = get();
-    const updates = toggleStudyActionSystem(state, actionId);
-    set(mergeGameState(state, updates));
-  },
-  updateCombat: (updater) => {
-    const state = get();
-    const updates = updater(state);
-    set({
-      ...state,
-      ...updates,
-      combat: updates.combat ? { ...state.combat, ...updates.combat } : state.combat,
-    });
-  },
-  setActiveTab: (tab) => {
-    set({ activeTab: tab });
-  },
-  equipSpell: (spellId: string) => {
-    const state = get();
-    if (state.spells.equipped.includes(spellId)) return;
-    if (state.spells.equipped.length >= state.spells.slots) return;
-
-    set({
-      spells: {
-        ...state.spells,
-        equipped: [...state.spells.equipped, spellId],
-      },
-    });
-  },
-  unequipSpell: (spellId: string) => {
-    const state = get();
-    set({
-      spells: {
-        ...state.spells,
-        equipped: state.spells.equipped.filter((id) => id !== spellId),
-        cooldowns: {
-          ...state.spells.cooldowns,
-          [spellId]: 0,
-        },
-      },
-    });
-  },
+  // Combine all slices
+  ...createActionsSlice(set, get),
+  ...createCombatSlice(set, get),
+  ...createSpellsSlice(set, get),
 }));
