@@ -4,19 +4,10 @@ import { PLAYER_ATTACK_INTERVAL, PLAYER_BASE_DAMAGE, PLAYER_REVIVE_HEALTH_PERCEN
 import { addLogEntry, createPlayerAttackEntry, createEnemyAttackEntry, createLogEntry } from './combat/combatLogger';
 
 export function updateCombat(state: GameState, delta: number): Partial<GameState> {
-  const updates: Partial<GameState> = {};
-
-  // If combat is active but no enemy, spawn one
-  if (state.combat.isActive && !state.combat.currentEnemy) {
-    return {
-      combat: {
-        isActive: true,
-        currentEnemy: getRandomEnemy(),
-        playerAttackTimer: PLAYER_ATTACK_INTERVAL,
-        enemyAttackTimer: 0,
-        log: [],
-      },
-    };
+  // Handle enemy spawning
+  const spawnResult = spawnEnemy(state);
+  if (spawnResult) {
+    return spawnResult;
   }
 
   // If combat not active or no enemy, do nothing
@@ -31,60 +22,126 @@ export function updateCombat(state: GameState, delta: number): Partial<GameState
     return handleEnemyDefeat(state, enemy);
   }
 
-  // Player auto-attack
+  const updates: Partial<GameState> = {};
+
+  // Process player attack
+  const playerAttackResult = processPlayerAttack(state, delta, enemy);
+  if (playerAttackResult.isDefeat) {
+    return playerAttackResult.updates;
+  }
+  Object.assign(updates, playerAttackResult.updates);
+
+  // Process enemy attack
+  const enemyAttackResult = processEnemyAttack(state, delta, enemy);
+  if (enemyAttackResult.isDefeat) {
+    return enemyAttackResult.updates;
+  }
+  Object.assign(updates, enemyAttackResult.updates);
+
+  return updates;
+}
+
+function spawnEnemy(state: GameState): Partial<GameState> | null {
+  if (state.combat.isActive && !state.combat.currentEnemy) {
+    return {
+      combat: {
+        isActive: true,
+        currentEnemy: getRandomEnemy(),
+        playerAttackTimer: PLAYER_ATTACK_INTERVAL,
+        enemyAttackTimer: 0,
+        log: [],
+      },
+    };
+  }
+  return null;
+}
+
+interface AttackResult {
+  updates: Partial<GameState>;
+  isDefeat: boolean;
+}
+
+function processPlayerAttack(state: GameState, delta: number, enemy: Enemy): AttackResult {
   const newPlayerTimer = state.combat.playerAttackTimer - delta;
+
   if (newPlayerTimer <= 0) {
     const playerDamage = calculatePlayerDamage(state);
     const newEnemyHealth = enemy.health - playerDamage;
 
     if (newEnemyHealth <= 0) {
-      return handleEnemyDefeat(state, enemy);
+      return {
+        updates: handleEnemyDefeat(state, enemy),
+        isDefeat: true,
+      };
     }
 
     const logEntry = createPlayerAttackEntry(playerDamage);
 
-    updates.combat = {
-      ...state.combat,
-      currentEnemy: { ...enemy, health: newEnemyHealth },
-      playerAttackTimer: PLAYER_ATTACK_INTERVAL,
-      log: addLogEntry(state.combat.log, logEntry),
+    return {
+      updates: {
+        combat: {
+          ...state.combat,
+          currentEnemy: { ...enemy, health: newEnemyHealth },
+          playerAttackTimer: PLAYER_ATTACK_INTERVAL,
+          log: addLogEntry(state.combat.log, logEntry),
+        },
+      },
+      isDefeat: false,
     };
-  } else {
-    updates.combat = { ...state.combat, playerAttackTimer: newPlayerTimer };
   }
 
-  // Enemy attack
+  return {
+    updates: {
+      combat: { ...state.combat, playerAttackTimer: newPlayerTimer },
+    },
+    isDefeat: false,
+  };
+}
+
+function processEnemyAttack(state: GameState, delta: number, enemy: Enemy): AttackResult {
   const newEnemyTimer = (state.combat.enemyAttackTimer || enemy.attackInterval) - delta;
+
   if (newEnemyTimer <= 0) {
     const enemyDamage = enemy.damage;
     const newPlayerHealth = state.specialResources.health.current - enemyDamage;
 
     if (newPlayerHealth <= 0) {
-      return handlePlayerDefeat(state);
+      return {
+        updates: handlePlayerDefeat(state),
+        isDefeat: true,
+      };
     }
 
     const logEntry = createEnemyAttackEntry(enemy.name, enemyDamage);
 
-    updates.specialResources = {
-      ...state.specialResources,
-      health: {
-        ...state.specialResources.health,
-        current: newPlayerHealth,
+    return {
+      updates: {
+        specialResources: {
+          ...state.specialResources,
+          health: {
+            ...state.specialResources.health,
+            current: newPlayerHealth,
+          },
+        },
+        combat: {
+          ...state.combat,
+          enemyAttackTimer: enemy.attackInterval,
+          log: addLogEntry(state.combat.log, logEntry),
+        },
       },
-    };
-    updates.combat = {
-      ...updates.combat,
-      enemyAttackTimer: enemy.attackInterval,
-      log: addLogEntry(state.combat.log, logEntry),
-    };
-  } else {
-    updates.combat = {
-      ...updates.combat,
-      enemyAttackTimer: newEnemyTimer,
+      isDefeat: false,
     };
   }
 
-  return updates;
+  return {
+    updates: {
+      combat: {
+        ...state.combat,
+        enemyAttackTimer: newEnemyTimer,
+      },
+    },
+    isDefeat: false,
+  };
 }
 
 function calculatePlayerDamage(state: GameState): number {

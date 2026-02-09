@@ -2,6 +2,7 @@ import { useGameStore } from '../../stores/gameStore';
 import { DUNGEON_DEFS } from '../../data/dungeons';
 import { startCombat, stopCombat } from '../../systems/combat';
 import { PLAYER_ATTACK_INTERVAL } from '../../constants/combat';
+import { ProgressBar } from './ProgressBar';
 
 export function CombatView() {
   const combat = useGameStore((s) => s.combat);
@@ -64,12 +65,6 @@ export function CombatView() {
     );
   }
 
-  const healthPercent = (enemy.health / enemy.maxHealth) * 100;
-  const playerHealthPercent = (health.current / health.max) * 100;
-
-  const playerAttackPercent = ((PLAYER_ATTACK_INTERVAL - combat.playerAttackTimer) / PLAYER_ATTACK_INTERVAL) * 100;
-  const enemyAttackPercent = ((enemy.attackInterval - (combat.enemyAttackTimer || enemy.attackInterval)) / enemy.attackInterval) * 100;
-
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
@@ -86,52 +81,26 @@ export function CombatView() {
 
       <div className="max-w-md space-y-6">
         {/* Enemy */}
-        <div className="bg-gray-800 p-4 rounded">
-          <div className="flex justify-between mb-2">
-            <span className="text-gray-100">{enemy.name}</span>
-            <span className="text-gray-400">{Math.ceil(enemy.health)} / {enemy.maxHealth}</span>
-          </div>
-          <div className="h-3 bg-gray-900 rounded-full overflow-hidden mb-2">
-            <div
-              className="h-full bg-red-900 transition-all duration-75"
-              style={{ width: `${healthPercent}%` }}
-            />
-          </div>
-          <div className="flex justify-between text-xs text-gray-500 mb-1">
-            <span>Attack: {enemy.attackInterval}s</span>
-            <span>{Math.ceil((combat.enemyAttackTimer || enemy.attackInterval) * 10) / 10}s</span>
-          </div>
-          <div className="h-1.5 bg-gray-900 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-orange-900 transition-all duration-75"
-              style={{ width: `${enemyAttackPercent}%` }}
-            />
-          </div>
-        </div>
+        <ProgressBar
+          label={enemy.name}
+          current={enemy.health}
+          max={enemy.maxHealth}
+          healthColor="red"
+          attackInterval={enemy.attackInterval}
+          attackTimer={combat.enemyAttackTimer || enemy.attackInterval}
+          attackColor="orange"
+        />
 
         {/* Player */}
-        <div className="bg-gray-800 p-4 rounded">
-          <div className="flex justify-between mb-2">
-            <span className="text-gray-100">You</span>
-            <span className="text-gray-400">{Math.ceil(health.current)} / {health.max}</span>
-          </div>
-          <div className="h-3 bg-gray-900 rounded-full overflow-hidden mb-2">
-            <div
-              className="h-full bg-green-900 transition-all duration-75"
-              style={{ width: `${playerHealthPercent}%` }}
-            />
-          </div>
-          <div className="flex justify-between text-xs text-gray-500 mb-1">
-            <span>Attack: {PLAYER_ATTACK_INTERVAL}s</span>
-            <span>{Math.ceil(combat.playerAttackTimer * 10) / 10}s</span>
-          </div>
-          <div className="h-1.5 bg-gray-900 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-blue-900 transition-all duration-75"
-              style={{ width: `${playerAttackPercent}%` }}
-            />
-          </div>
-        </div>
+        <ProgressBar
+          label="You"
+          current={health.current}
+          max={health.max}
+          healthColor="green"
+          attackInterval={PLAYER_ATTACK_INTERVAL}
+          attackTimer={combat.playerAttackTimer}
+          attackColor="blue"
+        />
 
         {/* Combat Log */}
         {combat.log.length > 0 && (

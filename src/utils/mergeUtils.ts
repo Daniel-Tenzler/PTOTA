@@ -96,6 +96,82 @@ export function mergeGameState(
 }
 
 /**
+ * Merge strategy for different property types.
+ */
+type MergeStrategy<T> = (
+  accumulator: T | undefined,
+  newValue: Partial<T>,
+  baseValue: T
+) => T;
+
+/**
+ * Generic shallow merge for dictionary-like properties.
+ */
+function mergeShallowProperty<T extends Record<string, unknown>>(
+  accumulator: T | undefined,
+  newValue: Partial<T>,
+  baseValue: T
+): T {
+  return {
+    ...(accumulator || baseValue),
+    ...newValue,
+  } as T;
+}
+
+/**
+ * Merge strategy for special resources (deep merge for stamina/health).
+ */
+const mergeSpecialResourcesProperty: MergeStrategy<GameState['specialResources']> = (
+  accumulator,
+  newValue,
+  baseValue
+): GameState['specialResources'] => {
+  const acc = accumulator || baseValue;
+  return {
+    stamina: {
+      current: newValue.stamina?.current ?? acc.stamina.current,
+      max: newValue.stamina?.max ?? acc.stamina.max,
+      regenRate: newValue.stamina?.regenRate ?? acc.stamina.regenRate,
+    },
+    health: {
+      current: newValue.health?.current ?? acc.health.current,
+      max: newValue.health?.max ?? acc.health.max,
+      regenRate: newValue.health?.regenRate ?? acc.health.regenRate,
+    },
+  };
+};
+
+/**
+ * Merge strategy for spells (deep merge for cooldowns).
+ */
+const mergeSpellsProperty: MergeStrategy<GameState['spells']> = (
+  accumulator,
+  newValue,
+  baseValue
+): GameState['spells'] => {
+  const acc = accumulator || baseValue;
+  return {
+    slots: newValue.slots ?? acc.slots,
+    equipped: newValue.equipped ?? acc.equipped,
+    cooldowns: {
+      ...acc.cooldowns,
+      ...(newValue.cooldowns || {}),
+    },
+  };
+};
+
+/**
+ * Properties that use shallow merge (dictionary-like objects).
+ */
+const SHALLOW_MERGE_KEYS = [
+  'resources',
+  'actions',
+  'skills',
+  'combat',
+  'dungeons',
+] as const;
+
+/**
  * Accumulate multiple partial updates into a single update.
  * Useful for collecting updates from multiple systems in the game loop.
  *
@@ -111,57 +187,38 @@ export function accumulateUpdates(
 ): Partial<GameState> {
   const result: Partial<GameState> = { ...accumulator };
 
-  // Merge each top-level property
   for (const key of Object.keys(newUpdates)) {
     const typedKey = key as keyof GameState;
+    const newValue = newUpdates[typedKey];
 
-    if (newUpdates[typedKey]) {
-      if (typedKey === 'specialResources') {
-        result.specialResources = {
-          ...(result.specialResources || baseState.specialResources),
-          ...newUpdates.specialResources,
-        };
-      } else if (typedKey === 'spells' && newUpdates.spells) {
-        result.spells = {
-          ...(result.spells || baseState.spells),
-          ...newUpdates.spells,
-          cooldowns: {
-            ...(result.spells?.cooldowns || baseState.spells.cooldowns),
-            ...(newUpdates.spells.cooldowns || {}),
-          },
-        };
-      } else if (typedKey === 'resources') {
-        result.resources = {
-          ...(result.resources || baseState.resources),
-          ...newUpdates.resources,
-        };
-      } else if (typedKey === 'actions') {
-        result.actions = {
-          ...(result.actions || baseState.actions),
-          ...newUpdates.actions,
-        };
-      } else if (typedKey === 'skills') {
-        result.skills = {
-          ...(result.skills || baseState.skills),
-          ...newUpdates.skills,
-        };
-      } else if (typedKey === 'combat') {
-        result.combat = {
-          ...(result.combat || baseState.combat),
-          ...newUpdates.combat,
-        };
-      } else if (typedKey === 'dungeons') {
-        result.dungeons = {
-          ...(result.dungeons || baseState.dungeons),
-          ...newUpdates.dungeons,
-        };
-      } else if (typedKey === 'lastUpdate') {
-        // lastUpdate just gets overwritten
-        result.lastUpdate = newUpdates.lastUpdate;
-      } else if (typedKey === 'activeTab') {
-        // activeTab just gets overwritten
-        result.activeTab = newUpdates.activeTab;
-      }
+    if (newValue === undefined || newValue === null) continue;
+
+    // Use custom merge strategy if available
+    if (typedKey === 'specialResources') {
+      result.specialResources = mergeSpecialResourcesProperty(
+        result.specialResources,
+        newValue as Partial<GameState['specialResources']>,
+        baseState.specialResources
+      );
+    } else if (typedKey === 'spells') {
+      result.spells = mergeSpellsProperty(
+        result.spells,
+        newValue as Partial<GameState['spells']>,
+        baseState.spells
+      );
+    }
+    // Use shallow merge for dictionary-like properties
+    else if (SHALLOW_MERGE_KEYS.includes(typedKey as any)) { // eslint-disable-line @typescript-eslint/no-explicit-any
+      result[typedKey] = mergeShallowProperty(
+        result[typedKey] as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+        newValue as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+        baseState[typedKey] as any // eslint-disable-line @typescript-eslint/no-explicit-any
+      );
+    }
+    // Simple override for scalar values (lastUpdate, activeTab)
+    else {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (result as any)[typedKey] = newValue;
     }
   }
 

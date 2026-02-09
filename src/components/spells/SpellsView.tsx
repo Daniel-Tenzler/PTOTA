@@ -3,88 +3,92 @@ import { SPELL_DEFS } from '../../data/spells';
 import { useTooltip, spellRenderer } from '../tooltip';
 import type { SpellDefinition } from '../../types';
 
-// Separate component for equipped spell item to avoid hooks-in-loop issue
-function EquippedSpellItem({
-  spellId,
-  index,
-  cooldown,
-  onUnequip,
-}: {
-  spellId: string;
-  index: number;
-  cooldown: number;
-  onUnequip: (spellId: string) => void;
-}) {
-  const spell = SPELL_DEFS[spellId];
-  if (!spell) return null;
+type SpellItemVariant = 'equipped' | 'available';
 
+interface SpellItemProps {
+  spell: SpellDefinition;
+  variant: SpellItemVariant;
+  // Props for equipped variant
+  index?: number;
+  cooldown?: number;
+  // Props for available variant
+  isEquipped?: boolean;
+  canEquip?: boolean;
+  // Callbacks
+  onUnequip?: (spellId: string) => void;
+  onEquip?: (spellId: string) => void;
+}
+
+// Unified component for spell items to avoid duplication
+function SpellItem({
+  spell,
+  variant,
+  index,
+  cooldown = 0,
+  isEquipped = false,
+  canEquip = false,
+  onUnequip,
+  onEquip,
+}: SpellItemProps) {
   const { triggerProps, tooltipElement } = useTooltip(spellRenderer, {
     definition: spell,
     currentCooldown: cooldown,
   });
 
-  return (
-    <div>
-      <div
-        {...triggerProps}
-        className="bg-gray-800 p-3 rounded cursor-pointer hover:bg-gray-700"
-        onClick={() => onUnequip(spellId)}
-      >
-        <div className="flex justify-between">
-          <span className="text-gray-100">{spell.name}</span>
-          <span className="text-gray-400">Slot {index + 1}</span>
-        </div>
-        <p className="text-sm text-gray-500 mt-1">{spell.description}</p>
-        {cooldown > 0 && (
-          <div className="text-xs text-gray-600 mt-2">
-            Cooldown: {parseFloat(cooldown.toFixed(1))}s
-          </div>
-        )}
-        <div className="text-xs text-gray-600 mt-2">Click to unequip</div>
-      </div>
-      {tooltipElement}
-    </div>
-  );
-}
+  const isEquippedVariant = variant === 'equipped';
 
-// Separate component for available spell item to avoid hooks-in-loop issue
-function AvailableSpellItem({
-  spell,
-  isEquipped,
-  canEquip,
-  onEquip,
-}: {
-  spell: SpellDefinition;
-  isEquipped: boolean;
-  canEquip: boolean;
-  onEquip: (spellId: string) => void;
-}) {
-  const { triggerProps, tooltipElement } = useTooltip(spellRenderer, {
-    definition: spell,
-    currentCooldown: 0,
-  });
+  const baseClassName = 'p-3 rounded';
+  const variantClassName = isEquippedVariant
+    ? 'bg-gray-800 cursor-pointer hover:bg-gray-700'
+    : isEquipped
+      ? 'bg-gray-800'
+      : canEquip
+        ? 'bg-gray-900 cursor-pointer hover:bg-gray-800'
+        : 'bg-gray-900 opacity-50';
+
+  const handleClick = () => {
+    if (isEquippedVariant && onUnequip) {
+      onUnequip(spell.id);
+    } else if (!isEquippedVariant && canEquip && onEquip) {
+      onEquip(spell.id);
+    }
+  };
 
   return (
     <div>
       <div
         {...triggerProps}
-        className={`p-3 rounded ${
-          isEquipped
-            ? 'bg-gray-800'
-            : canEquip
-              ? 'bg-gray-900 cursor-pointer hover:bg-gray-800'
-              : 'bg-gray-900 opacity-50'
-        }`}
-        onClick={() => canEquip && onEquip(spell.id)}
+        className={`${baseClassName} ${variantClassName}`}
+        onClick={handleClick}
       >
-        <div className="text-gray-100">{spell.name}</div>
-        <div className="text-sm text-gray-500">{spell.description}</div>
-        <div className="text-xs text-gray-600 mt-1">Cooldown: {spell.cooldown}s</div>
-        {canEquip && (
-          <div className="text-xs text-gray-500 mt-2">Click to equip</div>
-        )}
-        {isEquipped && (
-          <div className="text-xs text-gray-600 mt-2">Equipped</div>
+        {isEquippedVariant ? (
+          <>
+            <div className="flex justify-between">
+              <span className="text-gray-100">{spell.name}</span>
+              <span className="text-gray-400">Slot {index! + 1}</span>
+            </div>
+            <p className="text-sm text-gray-500 mt-1">{spell.description}</p>
+            {cooldown > 0 && (
+              <div className="text-xs text-gray-600 mt-2">
+                Cooldown: {parseFloat(cooldown.toFixed(1))}s
+              </div>
+            )}
+            <div className="text-xs text-gray-600 mt-2">Click to unequip</div>
+          </>
+        ) : (
+          <>
+            <div className="text-gray-100">{spell.name}</div>
+            <div className="text-sm text-gray-500">{spell.description}</div>
+            <div className="text-xs text-gray-600 mt-1">
+              Cooldown: {spell.cooldown}s
+            </div>
+            {canEquip && (
+              <div className="text-xs text-gray-500 mt-2">Click to equip</div>
+            )}
+            {isEquipped && (
+              <div className="text-xs text-gray-600 mt-2">Equipped</div>
+            )}
+          </>
         )}
       </div>
       {tooltipElement}
@@ -113,9 +117,10 @@ export function SpellsView() {
           {equipped
             .filter((spellId) => SPELL_DEFS[spellId])
             .map((spellId, index) => (
-              <EquippedSpellItem
+              <SpellItem
                 key={spellId}
-                spellId={spellId}
+                spell={SPELL_DEFS[spellId]}
+                variant="equipped"
                 index={index}
                 cooldown={cooldowns[spellId] || 0}
                 onUnequip={unequipSpell}
@@ -137,9 +142,10 @@ export function SpellsView() {
             const canEquip = !isEquipped && equipped.length < spells.slots;
 
             return (
-              <AvailableSpellItem
+              <SpellItem
                 key={spell.id}
                 spell={spell}
+                variant="available"
                 isEquipped={isEquipped}
                 canEquip={canEquip}
                 onEquip={equipSpell}
