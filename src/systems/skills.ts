@@ -1,5 +1,6 @@
 import type { GameState, SkillDefinition, SkillState } from '../types';
 import { SKILL_DEFS } from '../data/skills';
+import { ACTION_DEFS, STUDY_ACTIONS } from '../data/actions';
 
 export function checkSkillLevelUps(
   state: GameState
@@ -37,6 +38,22 @@ export function checkSkillLevelUps(
               lastExecution: 0,
             },
           };
+        } else if (bonus.effect === 'unlock-skill') {
+          // Unlock all actions that grant XP to this skill
+          const allActions = { ...ACTION_DEFS, ...STUDY_ACTIONS };
+          for (const [actionId, actionDef] of Object.entries(allActions)) {
+            if (actionDef.skillXp && actionDef.skillXp[skillId]) {
+              updates.actions = {
+                ...updates.actions,
+                [actionId]: {
+                  executionCount: 0,
+                  isUnlocked: true,
+                  isActive: false,
+                  lastExecution: 0,
+                },
+              };
+            }
+          }
         }
       }
     }

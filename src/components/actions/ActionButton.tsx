@@ -71,27 +71,28 @@ export function ActionButton({ actionId }: Props) {
         onClick={handleClick}
         disabled={!canExec && !isActive}
         className={`
-          w-full px-4 py-3 rounded transition-colors text-left
+          px-3 py-1.5 rounded text-sm font-medium transition-colors whitespace-nowrap
           ${isActive
-            ? 'bg-green-900 border border-green-700 text-green-100'
-            : 'bg-gray-800 hover:bg-gray-700'
+            ? 'bg-green-900/80 border border-green-700 text-green-100'
+            : canExec
+              ? 'bg-gray-800 hover:bg-gray-700 text-gray-200'
+              : 'bg-gray-900/50 text-gray-600'
           }
-          ${(!canExec && !isActive) && 'bg-gray-900 text-gray-600'}
         `}
       >
-        <div className="flex items-center justify-between">
-          <span>{definition.name}</span>
+        <span className="flex items-center gap-2">
+          {definition.name}
           {isTimed && (
-            <span className="text-xs">
-              {isActive ? '● Active' : '○ Inactive'}
+            <span className="text-xs opacity-70">
+              {isActive ? '●' : '○'}
             </span>
           )}
           {isUnlock && (
-            <span className="text-xs text-gray-500">
-              One-time
+            <span className="text-xs opacity-50">
+              ⟡
             </span>
           )}
-        </div>
+        </span>
       </button>
       {tooltipElement}
     </>

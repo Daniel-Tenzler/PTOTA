@@ -42,11 +42,18 @@ const DEFAULT_STATE: GameState = {
     'gather-ash': { executionCount: 0, isUnlocked: false, isActive: false, lastExecution: 0 },
     'collect-spring-water': { executionCount: 0, isUnlocked: false, isActive: false, lastExecution: 0 },
     'mine-ore': { executionCount: 0, isUnlocked: false, isActive: false, lastExecution: 0 },
+    // Advanced gathering actions (locked until corresponding skill reaches level 2)
+    'harvest-bone-dust': { executionCount: 0, isUnlocked: false, isActive: false, lastExecution: 0 },
+    'transmute-void-salts': { executionCount: 0, isUnlocked: false, isActive: false, lastExecution: 0 },
+    'capture-storm-glass': { executionCount: 0, isUnlocked: false, isActive: false, lastExecution: 0 },
     // Study actions (hidden from ActionsView)
     'study-arcane': { executionCount: 0, isUnlocked: true, isActive: false, lastExecution: 0 },
     'study-pyromancy': { executionCount: 0, isUnlocked: true, isActive: false, lastExecution: 0 },
     'study-hydromancy': { executionCount: 0, isUnlocked: true, isActive: false, lastExecution: 0 },
     'study-geomancy': { executionCount: 0, isUnlocked: true, isActive: false, lastExecution: 0 },
+    'study-necromancy': { executionCount: 0, isUnlocked: true, isActive: false, lastExecution: 0 },
+    'study-alchemy': { executionCount: 0, isUnlocked: true, isActive: false, lastExecution: 0 },
+    'study-aeromancy': { executionCount: 0, isUnlocked: true, isActive: false, lastExecution: 0 },
   },
   skills: {
     arcane: { level: 1, experience: 0 },
@@ -54,6 +61,10 @@ const DEFAULT_STATE: GameState = {
     pyromancy: { level: 1, experience: 0 },
     hydromancy: { level: 1, experience: 0 },
     geomancy: { level: 1, experience: 0 },
+    // Advanced magical disciplines
+    necromancy: { level: 1, experience: 0 },
+    alchemy: { level: 1, experience: 0 },
+    aeromancy: { level: 1, experience: 0 },
   },
   spells: {
     slots: 1,

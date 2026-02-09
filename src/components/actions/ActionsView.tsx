@@ -32,7 +32,7 @@ export function ActionsView() {
       {resourceActions.length > 0 && (
         <div className="mb-6">
           <h3 className="text-sm text-gray-400 mb-3">Actions</h3>
-          <div className="grid gap-3 max-w-md">
+          <div className="flex flex-wrap gap-2">
             {resourceActions.map(id => (
               <ActionButton key={id} actionId={id} />
             ))}
@@ -43,7 +43,7 @@ export function ActionsView() {
       {timedActions.length > 0 && (
         <div className="mb-6">
           <h3 className="text-sm text-gray-400 mb-3">Timed Actions</h3>
-          <div className="grid gap-3 max-w-md">
+          <div className="flex flex-wrap gap-2">
             {timedActions.map(id => (
               <ActionButton key={id} actionId={id} />
             ))}
@@ -54,7 +54,7 @@ export function ActionsView() {
       {unlockActions.length > 0 && (
         <div>
           <h3 className="text-sm text-gray-400 mb-3">Unlocks</h3>
-          <div className="grid gap-3 max-w-md">
+          <div className="flex flex-wrap gap-2">
             {unlockActions.map(id => (
               <ActionButton key={id} actionId={id} />
             ))}

@@ -18,6 +18,7 @@ export const SKILL_DEFS: Record<string, SkillDefinition> = {
       { level: 2, effect: 'unlock-action', value: 'collect-spring-water' },
       { level: 2, effect: 'unlock-action', value: 'mine-ore' },
       { level: 5, effect: 'unlock-spell-slot', value: 1 },
+      { level: 5, effect: 'unlock-skill', value: 'alchemy' },
     ],
   },
   pyromancy: {
@@ -26,6 +27,7 @@ export const SKILL_DEFS: Record<string, SkillDefinition> = {
     xpTable: STANDARD_XP_TABLE,
     bonuses: [
       { level: 5, effect: 'unlock-spell-slot', value: 1 },
+      { level: 5, effect: 'unlock-skill', value: 'necromancy' },
     ],
   },
   hydromancy: {
@@ -34,11 +36,36 @@ export const SKILL_DEFS: Record<string, SkillDefinition> = {
     xpTable: STANDARD_XP_TABLE,
     bonuses: [
       { level: 5, effect: 'unlock-spell-slot', value: 1 },
+      { level: 5, effect: 'unlock-skill', value: 'aeromancy' },
     ],
   },
   geomancy: {
     id: 'geomancy',
     name: 'Geomancy',
+    xpTable: STANDARD_XP_TABLE,
+    bonuses: [
+      { level: 5, effect: 'unlock-spell-slot', value: 1 },
+    ],
+  },
+  necromancy: {
+    id: 'necromancy',
+    name: 'Necromancy',
+    xpTable: STANDARD_XP_TABLE,
+    bonuses: [
+      { level: 5, effect: 'unlock-spell-slot', value: 1 },
+    ],
+  },
+  alchemy: {
+    id: 'alchemy',
+    name: 'Alchemy',
+    xpTable: STANDARD_XP_TABLE,
+    bonuses: [
+      { level: 5, effect: 'unlock-spell-slot', value: 1 },
+    ],
+  },
+  aeromancy: {
+    id: 'aeromancy',
+    name: 'Aeromancy',
     xpTable: STANDARD_XP_TABLE,
     bonuses: [
       { level: 5, effect: 'unlock-spell-slot', value: 1 },
