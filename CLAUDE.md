@@ -187,3 +187,24 @@ export const ACTION_DEFS: Record<string, ActionDefinition> = {
 ### Adding a New Skill
 1. Add definition to `src/data/skills.ts`
 2. Initialize skill state in `src/stores/gameStore.ts`
+
+## Workflow Preferences
+
+### Development Workflow
+- **NO git worktrees** - Work directly in the main workspace
+- **Direct implementation** - Proceed with implementation immediately after design approval
+- **Subagent-driven development** - Use Task tool with specialized agents for implementation
+- **NO confirmation prompts** - Do not ask "Ready to implement?" or similar questions
+- **User handles all git operations** - Never run git commands (add, commit, push, etc.)
+
+### When Planning Features
+1. Explore and design the solution
+2. Create design document in `docs/plans/`
+3. Proceed directly to implementation using subagent-driven development
+4. NO stopping to ask for approval or readiness
+
+### Implementation Approach
+- Break down work into independent tasks
+- Launch parallel agents when possible
+- Focus on one task at a time in order
+- Complete all work before presenting results

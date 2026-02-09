@@ -24,7 +24,7 @@ export function ResourcePanel() {
 }
 
 function ResourceRow({ name, value }: { name: string; value: number }) {
-  const displayValue = value < 10 ? value.toFixed(1) : Math.floor(value).toString();
+  const displayValue = value < 10 ? parseFloat(value.toFixed(1)) : Math.floor(value);
   return (
     <div className="flex justify-between">
       <span className="text-gray-400">{name}</span>
@@ -39,7 +39,7 @@ function SpecialResourceRow({ name, current, max }: { name: string; current: num
     <div>
       <div className="flex justify-between text-xs mb-1">
         <span className="text-gray-400">{name}</span>
-        <span className="text-gray-100">{current.toFixed(1)}/{max}</span>
+        <span className="text-gray-100">{parseFloat(current.toFixed(1))}/{max}</span>
       </div>
       <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
         <div

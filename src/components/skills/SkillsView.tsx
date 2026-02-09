@@ -1,6 +1,7 @@
 import { useGameStore } from '../../stores/gameStore';
 import { SKILL_DEFS } from '../../data/skills';
 import { getSkillProgress } from '../../systems/skills';
+import { useTooltip, skillRenderer } from '../tooltip';
 
 export function SkillsView() {
   const skills = useGameStore((s) => s.skills);
@@ -14,9 +15,16 @@ export function SkillsView() {
           if (!def) return null;
 
           const progress = getSkillProgress(skill, def);
+          const { triggerProps, tooltipElement } = useTooltip(
+            skillRenderer,
+            {
+              definition: def,
+              state: skill,
+            }
+          );
 
           return (
-            <div key={skillId} className="bg-gray-800 p-4 rounded">
+            <div key={skillId} {...triggerProps} className="bg-gray-800 p-4 rounded cursor-pointer hover:bg-gray-700">
               <div className="flex justify-between mb-2">
                 <span className="text-gray-100">{def.name}</span>
                 <span className="text-gray-400">Level {skill.level}</span>
@@ -30,6 +38,7 @@ export function SkillsView() {
               <div className="text-xs text-gray-500 mt-1">
                 {Math.floor(progress.current)} / {progress.needed} XP
               </div>
+              {tooltipElement}
             </div>
           );
         })}

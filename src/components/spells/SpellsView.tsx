@@ -1,5 +1,6 @@
 import { useGameStore } from '../../stores/gameStore';
 import { SPELL_DEFS } from '../../data/spells';
+import { useTooltip, spellRenderer } from '../tooltip';
 
 export function SpellsView() {
   const spells = useGameStore((s) => s.spells);
@@ -24,24 +25,34 @@ export function SpellsView() {
             const cooldown = cooldowns[spellId] || 0;
             if (!spell) return null;
 
+            const { triggerProps, tooltipElement } = useTooltip(
+              spellRenderer,
+              {
+                definition: spell,
+                currentCooldown: cooldown,
+              }
+            );
+
             return (
-              <div
-                key={spellId}
-                className="bg-gray-800 p-3 rounded cursor-pointer hover:bg-gray-700"
-                onClick={() => unequipSpell(spellId)}
-                title="Click to unequip"
-              >
-                <div className="flex justify-between">
-                  <span className="text-gray-100">{spell.name}</span>
-                  <span className="text-gray-400">Slot {index + 1}</span>
-                </div>
-                <p className="text-sm text-gray-500 mt-1">{spell.description}</p>
-                {cooldown > 0 && (
-                  <div className="text-xs text-gray-600 mt-2">
-                    Cooldown: {cooldown.toFixed(1)}s
+              <div key={spellId}>
+                <div
+                  {...triggerProps}
+                  className="bg-gray-800 p-3 rounded cursor-pointer hover:bg-gray-700"
+                  onClick={() => unequipSpell(spellId)}
+                >
+                  <div className="flex justify-between">
+                    <span className="text-gray-100">{spell.name}</span>
+                    <span className="text-gray-400">Slot {index + 1}</span>
                   </div>
-                )}
-                <div className="text-xs text-gray-600 mt-2">Click to unequip</div>
+                  <p className="text-sm text-gray-500 mt-1">{spell.description}</p>
+                  {cooldown > 0 && (
+                    <div className="text-xs text-gray-600 mt-2">
+                      Cooldown: {parseFloat(cooldown.toFixed(1))}s
+                    </div>
+                  )}
+                  <div className="text-xs text-gray-600 mt-2">Click to unequip</div>
+                </div>
+                {tooltipElement}
               </div>
             );
           })}
@@ -60,30 +71,40 @@ export function SpellsView() {
             const isEquipped = equipped.includes(spell.id);
             const canEquip = !isEquipped && equipped.length < spells.slots;
 
+            const { triggerProps, tooltipElement } = useTooltip(
+              spellRenderer,
+              {
+                definition: spell,
+                currentCooldown: 0,
+              }
+            );
+
             return (
-              <div
-                key={spell.id}
-                className={`p-3 rounded ${
-                  isEquipped
-                    ? 'bg-gray-800'
-                    : canEquip
-                      ? 'bg-gray-900 cursor-pointer hover:bg-gray-800'
-                      : 'bg-gray-900 opacity-50'
-                }`}
-                onClick={() => canEquip && equipSpell(spell.id)}
-                title={canEquip ? 'Click to equip' : isEquipped ? 'Already equipped' : 'No available slots'}
-              >
-                <div className="text-gray-100">{spell.name}</div>
-                <div className="text-sm text-gray-500">{spell.description}</div>
-                <div className="text-xs text-gray-600 mt-1">
-                  Cooldown: {spell.cooldown}s
+              <div key={spell.id}>
+                <div
+                  {...triggerProps}
+                  className={`p-3 rounded ${
+                    isEquipped
+                      ? 'bg-gray-800'
+                      : canEquip
+                        ? 'bg-gray-900 cursor-pointer hover:bg-gray-800'
+                        : 'bg-gray-900 opacity-50'
+                  }`}
+                  onClick={() => canEquip && equipSpell(spell.id)}
+                >
+                  <div className="text-gray-100">{spell.name}</div>
+                  <div className="text-sm text-gray-500">{spell.description}</div>
+                  <div className="text-xs text-gray-600 mt-1">
+                    Cooldown: {spell.cooldown}s
+                  </div>
+                  {canEquip && (
+                    <div className="text-xs text-gray-500 mt-2">Click to equip</div>
+                  )}
+                  {isEquipped && (
+                    <div className="text-xs text-gray-600 mt-2">Equipped</div>
+                  )}
                 </div>
-                {canEquip && (
-                  <div className="text-xs text-gray-500 mt-2">Click to equip</div>
-                )}
-                {isEquipped && (
-                  <div className="text-xs text-gray-600 mt-2">Equipped</div>
-                )}
+                {tooltipElement}
               </div>
             );
           })}
