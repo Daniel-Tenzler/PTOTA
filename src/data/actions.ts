@@ -1,4 +1,5 @@
 import type { ActionDefinition } from '../types';
+import { standardRankBonus } from '../utils/rankBonus';
 
 export const ACTION_DEFS: Record<string, ActionDefinition> = {
   'gain-gold': {
@@ -10,11 +11,7 @@ export const ACTION_DEFS: Record<string, ActionDefinition> = {
     staminaCost: 1,
     duration: 0,
     skillXp: { arcane: 1 },
-    rankBonus: (executions: number) => {
-      if (executions >= 100) return 0.2; // +20%
-      if (executions >= 10) return 0.1;  // +10%
-      return 0;
-    },
+    rankBonus: standardRankBonus,
   },
   'write-scrolls': {
     id: 'write-scrolls',
@@ -25,11 +22,7 @@ export const ACTION_DEFS: Record<string, ActionDefinition> = {
     staminaCost: 1,
     duration: 0,
     skillXp: { arcane: 2 },
-    rankBonus: (executions: number) => {
-      if (executions >= 100) return 0.2;
-      if (executions >= 10) return 0.1;
-      return 0;
-    },
+    rankBonus: standardRankBonus,
   },
   'gather-ash': {
     id: 'gather-ash',
@@ -40,11 +33,7 @@ export const ACTION_DEFS: Record<string, ActionDefinition> = {
     staminaCost: 1,
     duration: 0,
     skillXp: { pyromancy: 1 },
-    rankBonus: (executions: number) => {
-      if (executions >= 100) return 0.2;
-      if (executions >= 10) return 0.1;
-      return 0;
-    },
+    rankBonus: standardRankBonus,
   },
   'collect-spring-water': {
     id: 'collect-spring-water',
@@ -55,11 +44,7 @@ export const ACTION_DEFS: Record<string, ActionDefinition> = {
     staminaCost: 1,
     duration: 0,
     skillXp: { hydromancy: 1 },
-    rankBonus: (executions: number) => {
-      if (executions >= 100) return 0.2;
-      if (executions >= 10) return 0.1;
-      return 0;
-    },
+    rankBonus: standardRankBonus,
   },
   'mine-ore': {
     id: 'mine-ore',
@@ -70,10 +55,6 @@ export const ACTION_DEFS: Record<string, ActionDefinition> = {
     staminaCost: 1,
     duration: 0,
     skillXp: { geomancy: 1 },
-    rankBonus: (executions: number) => {
-      if (executions >= 100) return 0.2;
-      if (executions >= 10) return 0.1;
-      return 0;
-    },
+    rankBonus: standardRankBonus,
   },
 };

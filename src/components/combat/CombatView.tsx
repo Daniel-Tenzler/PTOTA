@@ -1,6 +1,7 @@
 import { useGameStore } from '../../stores/gameStore';
 import { DUNGEON_DEFS } from '../../data/dungeons';
 import { startCombat, stopCombat } from '../../systems/combat';
+import { PLAYER_ATTACK_INTERVAL } from '../../constants/combat';
 
 export function CombatView() {
   const combat = useGameStore((s) => s.combat);
@@ -66,7 +67,6 @@ export function CombatView() {
   const healthPercent = (enemy.health / enemy.maxHealth) * 100;
   const playerHealthPercent = (health.current / health.max) * 100;
 
-  const PLAYER_ATTACK_INTERVAL = 2.5;
   const playerAttackPercent = ((PLAYER_ATTACK_INTERVAL - combat.playerAttackTimer) / PLAYER_ATTACK_INTERVAL) * 100;
   const enemyAttackPercent = ((enemy.attackInterval - (combat.enemyAttackTimer || enemy.attackInterval)) / enemy.attackInterval) * 100;
 

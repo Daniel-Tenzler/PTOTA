@@ -4,6 +4,7 @@ import { ALL_ACTION_DEFS } from '../systems/actions';
 import { canExecuteAction, executeAction as executeActionSystem } from '../systems/actions';
 import { toggleTimedAction } from '../systems/timedActions';
 import { loadGame } from './saveStore';
+import { mergeGameState } from '../utils/mergeUtils';
 
 const SAVED_STATE = loadGame();
 
@@ -69,21 +70,9 @@ const DEFAULT_STATE: GameState = {
   activeTab: 'actions',
 };
 
-const INITIAL_STATE: GameState = SAVED_STATE ? {
-  ...DEFAULT_STATE,
-  ...SAVED_STATE,
-  // Deep merge nested objects
-  resources: { ...DEFAULT_STATE.resources, ...SAVED_STATE.resources },
-  specialResources: {
-    stamina: { ...DEFAULT_STATE.specialResources.stamina, ...(SAVED_STATE.specialResources?.stamina || {}) },
-    health: { ...DEFAULT_STATE.specialResources.health, ...(SAVED_STATE.specialResources?.health || {}) },
-  },
-  actions: { ...DEFAULT_STATE.actions, ...SAVED_STATE.actions },
-  skills: { ...DEFAULT_STATE.skills, ...(SAVED_STATE.skills || {}) },
-  spells: { ...DEFAULT_STATE.spells, ...SAVED_STATE.spells },
-  combat: { ...DEFAULT_STATE.combat, ...SAVED_STATE.combat },
-  dungeons: { ...DEFAULT_STATE.dungeons, ...SAVED_STATE.dungeons },
-} : DEFAULT_STATE;
+const INITIAL_STATE: GameState = SAVED_STATE
+  ? mergeGameState(DEFAULT_STATE, SAVED_STATE)
+  : DEFAULT_STATE;
 
 interface GameStore extends GameState {
   update: (delta: number, timestamp: number) => void;
@@ -107,35 +96,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     if (canExecuteAction(state, actionId, definition)) {
       const updates = executeActionSystem(state, actionId, definition);
-
-      // Deep merge nested objects to avoid losing data
-      set({
-        ...state,
-        ...updates,
-        resources: { ...state.resources, ...updates.resources },
-        specialResources: updates.specialResources ? {
-          stamina: { ...state.specialResources.stamina, ...(updates.specialResources?.stamina || {}) },
-          health: { ...state.specialResources.health, ...(updates.specialResources?.health || {}) },
-        } : state.specialResources,
-        actions: { ...state.actions, ...updates.actions },
-        skills: { ...state.skills, ...updates.skills },
-        spells: updates.spells ? {
-          ...state.spells,
-          ...updates.spells,
-          cooldowns: { ...state.spells.cooldowns, ...(updates.spells?.cooldowns || {}) },
-        } : state.spells,
-        combat: updates.combat ? { ...state.combat, ...updates.combat } : state.combat,
-      });
+      set(mergeGameState(state, updates));
     }
   },
   toggleTimedAction: (actionId: string) => {
     const state = get();
     const updates = toggleTimedAction(state, actionId);
-    set({
-      ...state,
-      ...updates,
-      actions: { ...state.actions, ...updates.actions },
-    });
+    set(mergeGameState(state, updates));
   },
   updateCombat: (updater) => {
     const state = get();

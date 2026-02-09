@@ -1,4 +1,5 @@
 import type { ActionDefinition } from '../types';
+import { timedRankBonus } from '../utils/rankBonus';
 
 export const TIMED_ACTION_DEFS: Record<string, ActionDefinition> = {
   'meditate': {
@@ -10,10 +11,6 @@ export const TIMED_ACTION_DEFS: Record<string, ActionDefinition> = {
     staminaCost: 0,
     duration: 1,
     skillXp: { arcane: 0.5 },
-    rankBonus: (n: number) => {
-      if (n >= 50) return 0.15;
-      if (n >= 10) return 0.05;
-      return 0;
-    },
+    rankBonus: timedRankBonus,
   },
 };

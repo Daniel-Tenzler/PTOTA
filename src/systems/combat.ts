@@ -1,11 +1,7 @@
-import type { GameState, Enemy, CombatLogEntry } from '../types';
+import type { GameState, Enemy } from '../types';
 import { getRandomEnemy } from '../data/enemies';
-
-const PLAYER_ATTACK_INTERVAL = 2.5;
-
-export function addLogEntry(log: CombatLogEntry[], entry: CombatLogEntry): CombatLogEntry[] {
-  return [...log, entry].slice(-20); // Keep only last 20 entries
-}
+import { PLAYER_ATTACK_INTERVAL, PLAYER_BASE_DAMAGE, PLAYER_REVIVE_HEALTH_PERCENT } from '../constants/combat';
+import { addLogEntry, createPlayerAttackEntry, createEnemyAttackEntry, createLogEntry } from './combat/combatLogger';
 
 export function updateCombat(state: GameState, delta: number): Partial<GameState> {
   const updates: Partial<GameState> = {};
@@ -45,11 +41,7 @@ export function updateCombat(state: GameState, delta: number): Partial<GameState
       return handleEnemyDefeat(state, enemy);
     }
 
-    const logEntry: CombatLogEntry = {
-      type: 'player-attack',
-      message: `You deal ${playerDamage} damage`,
-      timestamp: Date.now(),
-    };
+    const logEntry = createPlayerAttackEntry(playerDamage);
 
     updates.combat = {
       ...state.combat,
@@ -71,11 +63,7 @@ export function updateCombat(state: GameState, delta: number): Partial<GameState
       return handlePlayerDefeat(state);
     }
 
-    const logEntry: CombatLogEntry = {
-      type: 'enemy-attack',
-      message: `${enemy.name} deals ${enemyDamage} damage`,
-      timestamp: Date.now(),
-    };
+    const logEntry = createEnemyAttackEntry(enemy.name, enemyDamage);
 
     updates.specialResources = {
       ...state.specialResources,
@@ -101,7 +89,7 @@ export function updateCombat(state: GameState, delta: number): Partial<GameState
 
 function calculatePlayerDamage(state: GameState): number {
   // Base damage + skill bonuses
-  let damage = 5;
+  let damage = PLAYER_BASE_DAMAGE;
   const arcaneLevel = state.skills.arcane?.level || 1;
   damage += arcaneLevel;
   return damage;
@@ -128,11 +116,7 @@ function handleEnemyDefeat(state: GameState, enemy: Enemy): Partial<GameState> {
     currentEnemy: getRandomEnemy(),
     playerAttackTimer: PLAYER_ATTACK_INTERVAL,
     enemyAttackTimer: 0,
-    log: [{
-      type: 'enemy-defeat',
-      message: `${enemy.name} defeated! ${rewardMessages}`,
-      timestamp: Date.now(),
-    }],
+    log: [createLogEntry('enemy-defeat', `${enemy.name} defeated! ${rewardMessages}`)],
   };
 
   return updates;
@@ -151,7 +135,7 @@ function handlePlayerDefeat(state: GameState): Partial<GameState> {
       ...state.specialResources,
       health: {
         ...state.specialResources.health,
-        current: state.specialResources.health.max * 0.5, // Revive with 50% health
+        current: state.specialResources.health.max * PLAYER_REVIVE_HEALTH_PERCENT,
       },
     },
   };

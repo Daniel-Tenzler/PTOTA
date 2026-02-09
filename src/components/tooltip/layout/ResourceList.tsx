@@ -1,14 +1,8 @@
+import { formatNum } from '../../../utils/format';
+
 interface ResourceListProps {
   resources: Record<string, number>;
   bonus?: number;
-}
-
-// Format number to remove trailing zeros
-function formatNum(value: number): string {
-  // Round to avoid floating point precision issues
-  const rounded = Math.round(value * 100) / 100;
-  if (Number.isInteger(rounded)) return rounded.toString();
-  return rounded.toString();
 }
 
 export function ResourceList({ resources, bonus = 0 }: ResourceListProps) {

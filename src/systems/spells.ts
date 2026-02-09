@@ -1,16 +1,13 @@
-import type { GameState, CombatLogEntry } from '../types';
+import type { GameState } from '../types';
 import { SPELL_DEFS } from '../data/spells';
-
-function addLogEntry(log: CombatLogEntry[], entry: CombatLogEntry): CombatLogEntry[] {
-  return [...log, entry].slice(-20); // Keep only last 20 entries
-}
+import { addLogEntry, createSpellCastEntry } from './combat/combatLogger';
 
 export function updateSpells(state: GameState, delta: number): Partial<GameState> {
   if (!state.combat.isActive || !state.combat.currentEnemy) return {};
 
   const updates: Partial<GameState> = {};
   const newCooldowns: Record<string, number> = { ...state.spells.cooldowns };
-  const logEntries: CombatLogEntry[] = [];
+  const logEntries: ReturnType<typeof createSpellCastEntry>[] = [];
   let currentEnemy = state.combat.currentEnemy;
 
   // Reduce cooldowns and auto-cast
@@ -26,11 +23,7 @@ export function updateSpells(state: GameState, delta: number): Partial<GameState
         currentEnemy = { ...currentEnemy, health: Math.max(0, currentEnemy.health - damage) };
         newCooldowns[spellId] = spell.cooldown;
 
-        logEntries.push({
-          type: 'spell-cast',
-          message: `Cast ${spell.name} for ${damage} damage`,
-          timestamp: Date.now(),
-        });
+        logEntries.push(createSpellCastEntry(spell.name, damage));
       }
     }
   }

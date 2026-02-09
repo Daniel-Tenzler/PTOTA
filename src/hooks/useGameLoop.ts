@@ -5,6 +5,7 @@ import { checkSkillLevelUps } from '../systems/skills';
 import { updateCombat } from '../systems/combat';
 import { updateSpells } from '../systems/spells';
 import { updateTimedActions } from '../systems/timedActions';
+import { accumulateUpdates } from '../utils/mergeUtils';
 import type { GameState } from '../types';
 
 export function useGameLoop() {
@@ -20,66 +21,23 @@ export function useGameLoop() {
       // Get current state
       const state = useGameStore.getState();
 
-      // Collect all updates
-      const updates: Partial<GameState> = {
-        lastUpdate: currentTime,
-      };
+      // Collect all updates using accumulateUpdates
+      let updates: Partial<GameState> = { lastUpdate: currentTime };
 
       // Resources
-      const resourceUpdates = updateSpecialResources(state, delta);
-      Object.assign(updates, resourceUpdates);
+      updates = accumulateUpdates(updates, updateSpecialResources(state, delta), state);
 
       // Timed actions
-      const actionUpdates = updateTimedActions(state, delta);
-      if (actionUpdates.actions) {
-        updates.actions = { ...state.actions, ...actionUpdates.actions };
-      }
-      if (actionUpdates.resources) {
-        updates.resources = { ...state.resources, ...actionUpdates.resources };
-      }
-      if (actionUpdates.skills) {
-        updates.skills = { ...state.skills, ...actionUpdates.skills };
-      }
-      // Merge specialResources from timed actions with existing specialResources
-      if (actionUpdates.specialResources) {
-        updates.specialResources = {
-          ...(updates.specialResources || state.specialResources),
-          ...actionUpdates.specialResources,
-        };
-      }
+      updates = accumulateUpdates(updates, updateTimedActions(state, delta), state);
 
       // Skills
-      const skillUpdates = checkSkillLevelUps(state);
-      if (skillUpdates.skills) {
-        updates.skills = { ...updates.skills || state.skills, ...skillUpdates.skills };
-      }
-      if (skillUpdates.actions) {
-        updates.actions = { ...updates.actions || state.actions, ...skillUpdates.actions };
-      }
+      updates = accumulateUpdates(updates, checkSkillLevelUps(state), state);
 
       // Combat
-      const combatUpdates = updateCombat(state, delta);
-      if (combatUpdates.combat) {
-        updates.combat = { ...state.combat, ...combatUpdates.combat };
-      }
-      if (combatUpdates.resources) {
-        updates.resources = { ...updates.resources, ...combatUpdates.resources };
-      }
-      if (combatUpdates.specialResources) {
-        updates.specialResources = {
-          ...(updates.specialResources || state.specialResources),
-          ...combatUpdates.specialResources,
-        };
-      }
+      updates = accumulateUpdates(updates, updateCombat(state, delta), state);
 
       // Spells
-      const spellUpdates = updateSpells(state, delta);
-      if (spellUpdates.combat) {
-        updates.combat = { ...(updates.combat || state.combat), ...spellUpdates.combat };
-      }
-      if (spellUpdates.spells) {
-        updates.spells = { ...state.spells, ...spellUpdates.spells };
-      }
+      updates = accumulateUpdates(updates, updateSpells(state, delta), state);
 
       // Apply all updates at once
       useGameStore.setState(updates);

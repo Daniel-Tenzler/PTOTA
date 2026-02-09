@@ -1,17 +1,10 @@
 import { TooltipSection, ResourceList, StatRow } from '../layout';
+import { formatNum } from '../../../utils/format';
 import type { ActionDefinition, ActionState } from '../../../types';
 
 interface ActionRendererProps {
   definition: ActionDefinition;
   state: ActionState;
-}
-
-// Format number to remove trailing zeros
-function formatNum(value: number): string {
-  // Round to avoid floating point precision issues
-  const rounded = Math.round(value * 100) / 100;
-  if (Number.isInteger(rounded)) return rounded.toString();
-  return rounded.toString();
 }
 
 export function actionRenderer({ definition, state }: ActionRendererProps) {
