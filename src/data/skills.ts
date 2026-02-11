@@ -42,6 +42,8 @@ export const SKILL_DEFS: Record<string, SkillDefinition> = {
   arcane: {
     id: 'arcane',
     name: 'Arcane',
+    icon: 'Wand2',
+    color: 'purple',
     xpTable: STANDARD_XP_TABLE,
     bonuses: [
       createActionUnlockBonus(2, 'enchant-scrolls'),
@@ -55,6 +57,7 @@ export const SKILL_DEFS: Record<string, SkillDefinition> = {
   pyromancy: {
     id: 'pyromancy',
     name: 'Pyromancy',
+    color: 'orange',
     xpTable: STANDARD_XP_TABLE,
     bonuses: [
       SPELL_SLOT_BONUS,
@@ -64,6 +67,7 @@ export const SKILL_DEFS: Record<string, SkillDefinition> = {
   hydromancy: {
     id: 'hydromancy',
     name: 'Hydromancy',
+    color: 'blue',
     xpTable: STANDARD_XP_TABLE,
     bonuses: [
       SPELL_SLOT_BONUS,
@@ -73,24 +77,28 @@ export const SKILL_DEFS: Record<string, SkillDefinition> = {
   geomancy: {
     id: 'geomancy',
     name: 'Geomancy',
+    color: 'yellow',
     xpTable: STANDARD_XP_TABLE,
     bonuses: [SPELL_SLOT_BONUS],
   },
   necromancy: {
     id: 'necromancy',
     name: 'Necromancy',
+    color: 'green',
     xpTable: STANDARD_XP_TABLE,
     bonuses: [SPELL_SLOT_BONUS],
   },
   alchemy: {
     id: 'alchemy',
     name: 'Alchemy',
+    color: 'pink',
     xpTable: STANDARD_XP_TABLE,
     bonuses: [SPELL_SLOT_BONUS],
   },
   aeromancy: {
     id: 'aeromancy',
     name: 'Aeromancy',
+    color: 'cyan',
     xpTable: STANDARD_XP_TABLE,
     bonuses: [SPELL_SLOT_BONUS],
   },

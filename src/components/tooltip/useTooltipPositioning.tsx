@@ -1,4 +1,4 @@
-import { useState, useRef, type CSSProperties, type RefObject } from 'react';
+import { useState, useRef, useCallback, type CSSProperties, type RefObject } from 'react';
 import { calculatePosition } from './positioning';
 import type { Placement } from './types';
 
@@ -38,16 +38,16 @@ export function useTooltipPositioning(
   const positioningAttemptsRef = useRef(0);
 
   // Reset position state when visibility changes
-  const resetPosition = () => {
+  const resetPosition = useCallback(() => {
     setPosition({
       style: { opacity: 0, left: 0, top: 0, position: 'fixed', pointerEvents: 'none' },
       isPositioned: false,
     });
     positioningAttemptsRef.current = 0;
-  };
+  }, []);
 
   // Update position with retry logic
-  const updatePosition = (tooltipRef: RefObject<HTMLElement>) => {
+  const updatePosition = useCallback((tooltipRef: RefObject<HTMLElement>) => {
     if (!tooltipRef.current || !triggerRef.current) return;
 
     const triggerRect = triggerRef.current.getBoundingClientRect();
@@ -63,7 +63,7 @@ export function useTooltipPositioning(
       positioningAttemptsRef.current++;
       setTimeout(() => updatePosition(tooltipRef), POSITIONING_RETRY_DELAY);
     }
-  };
+  }, [triggerRef, placement, setPosition]);
 
   return {
     position,

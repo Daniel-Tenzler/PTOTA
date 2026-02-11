@@ -1,4 +1,4 @@
-import type { GameState, Enemy, CombatLogEntry } from '../../types';
+import type { GameState, Enemy, CombatLogEntry, CombatState, SpecialResources } from '../../types';
 import { PLAYER_ATTACK_INTERVAL, PLAYER_BASE_DAMAGE } from '../../constants/combat';
 import { addLogEntry, createPlayerAttackEntry, createEnemyAttackEntry } from './combatLogger';
 
@@ -14,6 +14,23 @@ import { addLogEntry, createPlayerAttackEntry, createEnemyAttackEntry } from './
 export interface AttackResult {
   updates: Partial<GameState>;
   isDefeat: boolean;
+}
+
+/**
+ * Helper to cast partial combat updates to the expected type.
+ * The caller (mergeCombatUpdates) will merge with base state,
+ * so returning partial updates is safe.
+ */
+function asCombatUpdate(updates: Partial<CombatState>): Partial<GameState>['combat'] {
+  return updates as Partial<GameState>['combat'];
+}
+
+/**
+ * Helper to cast partial special resources updates to the expected type.
+ * The merge functions in accumulateUpdates handle partial updates properly.
+ */
+function asSpecialResourcesUpdate(updates: Partial<SpecialResources>): Partial<GameState>['specialResources'] {
+  return updates as Partial<GameState>['specialResources'];
 }
 
 /**
@@ -43,10 +60,12 @@ interface AttackConfig {
  * Processes a timed attack using a common pattern.
  * Handles timer decrement, attack execution, and defeat detection.
  *
- * @param state - Current game state
+ * @param state - Current game state (used for log access)
  * @param delta - Time elapsed since last update (in seconds)
  * @param config - Attack configuration
  * @returns Attack result with state updates and defeat status
+ * NOTE: Returns only the CHANGED fields, not the full combat state.
+ * The caller is responsible for merging with base state.
  */
 function processTimedAttack(
   state: GameState,
@@ -57,16 +76,19 @@ function processTimedAttack(
 
   if (newTimer <= 0) {
     // Attack executed - return updates with timer reset and log
+    const combatUpdates: Partial<CombatState> = {
+      ...config.combatUpdates,
+      [config.timerKey]: config.timerInterval,
+      log: addLogEntry(state.combat.log, config.logEntry),
+    };
+
     if (config.isDefeat) {
       return {
         updates: {
-          ...config.specialResourcesUpdates,
-          combat: {
-            ...state.combat,
-            ...config.combatUpdates,
-            [config.timerKey]: config.timerInterval,
-            log: addLogEntry(state.combat.log, config.logEntry),
-          },
+          specialResources: config.specialResourcesUpdates
+            ? asSpecialResourcesUpdate(config.specialResourcesUpdates)
+            : undefined,
+          combat: asCombatUpdate(combatUpdates),
         },
         isDefeat: true,
       };
@@ -74,25 +96,21 @@ function processTimedAttack(
 
     return {
       updates: {
-        ...config.specialResourcesUpdates,
-        combat: {
-          ...state.combat,
-          ...config.combatUpdates,
-          [config.timerKey]: config.timerInterval,
-          log: addLogEntry(state.combat.log, config.logEntry),
-        },
+        specialResources: config.specialResourcesUpdates
+          ? asSpecialResourcesUpdate(config.specialResourcesUpdates)
+          : undefined,
+        combat: asCombatUpdate(combatUpdates),
       },
       isDefeat: false,
     };
   }
 
-  // Timer not ready - just return timer update
+  // Timer not ready - just return timer update (no spread of state.combat!)
   return {
     updates: {
-      combat: {
-        ...state.combat,
+      combat: asCombatUpdate({
         [config.timerKey]: newTimer,
-      },
+      }),
     },
     isDefeat: false,
   };

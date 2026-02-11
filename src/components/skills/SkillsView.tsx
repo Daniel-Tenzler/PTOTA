@@ -2,6 +2,7 @@ import { useGameStore } from '../../stores/gameStore';
 import { SKILL_DEFS } from '../../data/skills';
 import { getSkillProgress } from '../../systems/skills';
 import { useTooltip, skillRenderer } from '../tooltip';
+import { SkillIcon } from './SkillIcon';
 
 export function SkillsView() {
   const skills = useGameStore((s) => s.skills);
@@ -45,12 +46,15 @@ export function SkillsView() {
               } ${!isMaxLevel ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}`}
             >
               <div className="flex justify-between mb-2">
-                <span className="text-gray-100">{def.name}</span>
+                <span className={`text-${def.color ?? 'gray'}-100`}>
+                  <SkillIcon skillId={skillId} className="inline-block mr-2 align-text-bottom" />
+                  {def.name}
+                </span>
                 <span className="text-gray-400">Level {skill.level}</span>
               </div>
               <div className="h-2 bg-gray-900 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-gray-600 transition-all duration-300"
+                  className={`h-full bg-${def.color ?? 'gray'}-500 transition-all duration-300`}
                   style={{ width: `${progress.percent}%` }}
                 />
               </div>

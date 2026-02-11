@@ -13,6 +13,8 @@ export interface SkillBonus {
 export interface SkillDefinition {
   id: string;
   name: string;
+  icon?: string;
+  color?: string;
   xpTable: number[];
   bonuses: SkillBonus[];
 }

@@ -104,9 +104,9 @@ export function CombatView() {
           <div className="bg-gray-800 p-4 rounded">
             <div className="text-sm font-semibold text-gray-400 mb-2">Combat Log</div>
             <div className="space-y-1 max-h-40 overflow-y-auto">
-              {combat.log.slice().reverse().map((entry: CombatLogEntry) => (
+              {combat.log.slice().reverse().map((entry: CombatLogEntry, index: number) => (
                 <div
-                  key={entry.timestamp}
+                  key={`${entry.timestamp}-${entry.type}-${index}`}
                   className={`text-xs ${
                     entry.type === 'spell-cast' ? 'text-purple-400' :
                     entry.type === 'enemy-defeat' ? 'text-yellow-400' :
