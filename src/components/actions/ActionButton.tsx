@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { ALL_ACTION_DEFS } from '../../systems/actions';
+import { createActionState } from '../../systems/actions/actionFactory';
 import { useGameStore } from '../../stores/gameStore';
 import { useTooltip, actionRenderer } from '../tooltip';
 
@@ -54,7 +55,7 @@ export function ActionButton({ actionId }: Props) {
   const tooltipData = useMemo(
     () => ({
       definition,
-      state: actionState || { executionCount: 0, isUnlocked: true, isActive: false, lastExecution: 0 },
+      state: actionState || createActionState(true),
     }),
     [definition, actionState]
   );

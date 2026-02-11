@@ -1,4 +1,4 @@
-import type { SkillDefinition } from '../types';
+import type { SkillDefinition, SkillBonus } from '../types';
 
 /**
  * Standard XP table for skills.
@@ -7,18 +7,49 @@ import type { SkillDefinition } from '../types';
  */
 export const STANDARD_XP_TABLE = [0, 50, 150, 300, 500, 750, 1050, 1400, 1800, 2250];
 
+/**
+ * Common skill bonus: unlock a spell slot at level 5.
+ */
+const SPELL_SLOT_BONUS: SkillBonus = {
+  level: 5,
+  effect: 'unlock-spell-slot',
+  value: 1,
+};
+
+/**
+ * Creates an action unlock bonus for a specific level.
+ */
+function createActionUnlockBonus(level: number, actionId: string): SkillBonus {
+  return {
+    level,
+    effect: 'unlock-action',
+    value: actionId,
+  };
+}
+
+/**
+ * Creates a skill unlock bonus for a specific level.
+ */
+function createSkillUnlockBonus(level: number, skillId: string): SkillBonus {
+  return {
+    level,
+    effect: 'unlock-skill',
+    value: skillId,
+  };
+}
+
 export const SKILL_DEFS: Record<string, SkillDefinition> = {
   arcane: {
     id: 'arcane',
     name: 'Arcane',
     xpTable: STANDARD_XP_TABLE,
     bonuses: [
-      { level: 2, effect: 'unlock-action', value: 'enchant-scrolls' },
-      { level: 2, effect: 'unlock-action', value: 'gather-ash' },
-      { level: 2, effect: 'unlock-action', value: 'collect-spring-water' },
-      { level: 2, effect: 'unlock-action', value: 'mine-ore' },
-      { level: 5, effect: 'unlock-spell-slot', value: 1 },
-      { level: 5, effect: 'unlock-skill', value: 'alchemy' },
+      createActionUnlockBonus(2, 'enchant-scrolls'),
+      createActionUnlockBonus(2, 'gather-ash'),
+      createActionUnlockBonus(2, 'collect-spring-water'),
+      createActionUnlockBonus(2, 'mine-ore'),
+      SPELL_SLOT_BONUS,
+      createSkillUnlockBonus(5, 'alchemy'),
     ],
   },
   pyromancy: {
@@ -26,8 +57,8 @@ export const SKILL_DEFS: Record<string, SkillDefinition> = {
     name: 'Pyromancy',
     xpTable: STANDARD_XP_TABLE,
     bonuses: [
-      { level: 5, effect: 'unlock-spell-slot', value: 1 },
-      { level: 5, effect: 'unlock-skill', value: 'necromancy' },
+      SPELL_SLOT_BONUS,
+      createSkillUnlockBonus(5, 'necromancy'),
     ],
   },
   hydromancy: {
@@ -35,40 +66,32 @@ export const SKILL_DEFS: Record<string, SkillDefinition> = {
     name: 'Hydromancy',
     xpTable: STANDARD_XP_TABLE,
     bonuses: [
-      { level: 5, effect: 'unlock-spell-slot', value: 1 },
-      { level: 5, effect: 'unlock-skill', value: 'aeromancy' },
+      SPELL_SLOT_BONUS,
+      createSkillUnlockBonus(5, 'aeromancy'),
     ],
   },
   geomancy: {
     id: 'geomancy',
     name: 'Geomancy',
     xpTable: STANDARD_XP_TABLE,
-    bonuses: [
-      { level: 5, effect: 'unlock-spell-slot', value: 1 },
-    ],
+    bonuses: [SPELL_SLOT_BONUS],
   },
   necromancy: {
     id: 'necromancy',
     name: 'Necromancy',
     xpTable: STANDARD_XP_TABLE,
-    bonuses: [
-      { level: 5, effect: 'unlock-spell-slot', value: 1 },
-    ],
+    bonuses: [SPELL_SLOT_BONUS],
   },
   alchemy: {
     id: 'alchemy',
     name: 'Alchemy',
     xpTable: STANDARD_XP_TABLE,
-    bonuses: [
-      { level: 5, effect: 'unlock-spell-slot', value: 1 },
-    ],
+    bonuses: [SPELL_SLOT_BONUS],
   },
   aeromancy: {
     id: 'aeromancy',
     name: 'Aeromancy',
     xpTable: STANDARD_XP_TABLE,
-    bonuses: [
-      { level: 5, effect: 'unlock-spell-slot', value: 1 },
-    ],
+    bonuses: [SPELL_SLOT_BONUS],
   },
 };

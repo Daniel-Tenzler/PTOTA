@@ -1,4 +1,4 @@
-import type { GameState, Enemy } from '../../types';
+import type { GameState, Enemy, CombatLogEntry } from '../../types';
 import { PLAYER_ATTACK_INTERVAL, PLAYER_BASE_DAMAGE } from '../../constants/combat';
 import { addLogEntry, createPlayerAttackEntry, createEnemyAttackEntry } from './combatLogger';
 
@@ -14,6 +14,88 @@ import { addLogEntry, createPlayerAttackEntry, createEnemyAttackEntry } from './
 export interface AttackResult {
   updates: Partial<GameState>;
   isDefeat: boolean;
+}
+
+/**
+ * Configuration for processing a timed attack.
+ * Encapsulates the differences between player and enemy attacks.
+ */
+interface AttackConfig {
+  /** Current timer value */
+  currentTimer: number;
+  /** Timer interval (reset value after attack) */
+  timerInterval: number;
+  /** Timer key in combat state (e.g., 'playerAttackTimer' or 'enemyAttackTimer') */
+  timerKey: keyof GameState['combat'];
+  /** Damage to deal */
+  damage: number;
+  /** Log entry for the attack */
+  logEntry: CombatLogEntry;
+  /** Combat state updates after the attack (excluding timer) */
+  combatUpdates: Omit<Partial<GameState['combat']>, 'playerAttackTimer' | 'enemyAttackTimer'>;
+  /** Optional special resources updates (e.g., player health damage) */
+  specialResourcesUpdates?: Partial<GameState['specialResources']>;
+  /** Whether the attack resulted in a defeat */
+  isDefeat: boolean;
+}
+
+/**
+ * Processes a timed attack using a common pattern.
+ * Handles timer decrement, attack execution, and defeat detection.
+ *
+ * @param state - Current game state
+ * @param delta - Time elapsed since last update (in seconds)
+ * @param config - Attack configuration
+ * @returns Attack result with state updates and defeat status
+ */
+function processTimedAttack(
+  state: GameState,
+  delta: number,
+  config: AttackConfig
+): AttackResult {
+  const newTimer = config.currentTimer - delta;
+
+  if (newTimer <= 0) {
+    // Attack executed - return updates with timer reset and log
+    if (config.isDefeat) {
+      return {
+        updates: {
+          ...config.specialResourcesUpdates,
+          combat: {
+            ...state.combat,
+            ...config.combatUpdates,
+            [config.timerKey]: config.timerInterval,
+            log: addLogEntry(state.combat.log, config.logEntry),
+          },
+        },
+        isDefeat: true,
+      };
+    }
+
+    return {
+      updates: {
+        ...config.specialResourcesUpdates,
+        combat: {
+          ...state.combat,
+          ...config.combatUpdates,
+          [config.timerKey]: config.timerInterval,
+          log: addLogEntry(state.combat.log, config.logEntry),
+        },
+      },
+      isDefeat: false,
+    };
+  }
+
+  // Timer not ready - just return timer update
+  return {
+    updates: {
+      combat: {
+        ...state.combat,
+        [config.timerKey]: newTimer,
+      },
+    },
+    isDefeat: false,
+  };
 }
 
 /**
@@ -41,49 +123,23 @@ export function calculatePlayerDamage(state: GameState): number {
  * @returns Attack result with state updates and defeat status
  */
 export function processPlayerAttack(state: GameState, delta: number, enemy: Enemy): AttackResult {
-  const newPlayerTimer = state.combat.playerAttackTimer - delta;
+  const playerDamage = calculatePlayerDamage(state);
+  const newEnemyHealth = enemy.health - playerDamage;
+  const isDefeat = newEnemyHealth <= 0;
 
-  if (newPlayerTimer <= 0) {
-    const playerDamage = calculatePlayerDamage(state);
-    const newEnemyHealth = enemy.health - playerDamage;
-
-    // Note: Enemy defeat is handled by the caller (updateCombat)
-    // We return isDefeat: true to signal this condition
-    if (newEnemyHealth <= 0) {
-      return {
-        updates: {
-          combat: {
-            ...state.combat,
-            currentEnemy: { ...enemy, health: 0 },
-            playerAttackTimer: PLAYER_ATTACK_INTERVAL,
-            log: addLogEntry(state.combat.log, createPlayerAttackEntry(playerDamage)),
-          },
-        },
-        isDefeat: true,
-      };
-    }
-
-    const logEntry = createPlayerAttackEntry(playerDamage);
-
-    return {
-      updates: {
-        combat: {
-          ...state.combat,
-          currentEnemy: { ...enemy, health: newEnemyHealth },
-          playerAttackTimer: PLAYER_ATTACK_INTERVAL,
-          log: addLogEntry(state.combat.log, logEntry),
-        },
-      },
-      isDefeat: false,
-    };
-  }
-
-  return {
-    updates: {
-      combat: { ...state.combat, playerAttackTimer: newPlayerTimer },
+  const config: AttackConfig = {
+    currentTimer: state.combat.playerAttackTimer,
+    timerInterval: PLAYER_ATTACK_INTERVAL,
+    timerKey: 'playerAttackTimer',
+    damage: playerDamage,
+    logEntry: createPlayerAttackEntry(playerDamage),
+    combatUpdates: {
+      currentEnemy: { ...enemy, health: isDefeat ? 0 : newEnemyHealth },
     },
-    isDefeat: false,
+    isDefeat,
   };
+
+  return processTimedAttack(state, delta, config);
 }
 
 /**
@@ -96,62 +152,25 @@ export function processPlayerAttack(state: GameState, delta: number, enemy: Enem
  * @returns Attack result with state updates and defeat status
  */
 export function processEnemyAttack(state: GameState, delta: number, enemy: Enemy): AttackResult {
-  const newEnemyTimer = (state.combat.enemyAttackTimer || enemy.attackInterval) - delta;
+  const enemyDamage = enemy.damage;
+  const newPlayerHealth = state.specialResources.health.current - enemyDamage;
+  const isDefeat = newPlayerHealth <= 0;
 
-  if (newEnemyTimer <= 0) {
-    const enemyDamage = enemy.damage;
-    const newPlayerHealth = state.specialResources.health.current - enemyDamage;
-
-    // Note: Player defeat is handled by the caller (updateCombat)
-    // We return isDefeat: true to signal this condition
-    if (newPlayerHealth <= 0) {
-      return {
-        updates: {
-          specialResources: {
-            ...state.specialResources,
-            health: {
-              ...state.specialResources.health,
-              current: 0,
-            },
-          },
-          combat: {
-            ...state.combat,
-            enemyAttackTimer: enemy.attackInterval,
-            log: addLogEntry(state.combat.log, createEnemyAttackEntry(enemy.name, enemyDamage)),
-          },
-        },
-        isDefeat: true,
-      };
-    }
-
-    const logEntry = createEnemyAttackEntry(enemy.name, enemyDamage);
-
-    return {
-      updates: {
-        specialResources: {
-          ...state.specialResources,
-          health: {
-            ...state.specialResources.health,
-            current: newPlayerHealth,
-          },
-        },
-        combat: {
-          ...state.combat,
-          enemyAttackTimer: enemy.attackInterval,
-          log: addLogEntry(state.combat.log, logEntry),
-        },
-      },
-      isDefeat: false,
-    };
-  }
-
-  return {
-    updates: {
-      combat: {
-        ...state.combat,
-        enemyAttackTimer: newEnemyTimer,
+  const config: AttackConfig = {
+    currentTimer: state.combat.enemyAttackTimer || enemy.attackInterval,
+    timerInterval: enemy.attackInterval,
+    timerKey: 'enemyAttackTimer',
+    damage: enemyDamage,
+    logEntry: createEnemyAttackEntry(enemy.name, enemyDamage),
+    combatUpdates: {},
+    specialResourcesUpdates: {
+      health: {
+        ...state.specialResources.health,
+        current: isDefeat ? 0 : newPlayerHealth,
       },
     },
-    isDefeat: false,
+    isDefeat,
   };
+
+  return processTimedAttack(state, delta, config);
 }

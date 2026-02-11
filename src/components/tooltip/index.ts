@@ -1,5 +1,6 @@
 export { Tooltip } from './Tooltip';
 export { useTooltip } from './useTooltip.tsx';
+export { useTooltipPositioning } from './useTooltipPositioning';
 export { calculatePosition } from './positioning.tsx';
 export type { TooltipRenderer, Placement, Position } from './types';
 

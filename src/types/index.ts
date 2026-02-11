@@ -1,117 +1,34 @@
+/**
+ * Main type definitions export.
+ * Re-exports all domain-specific types and provides the central GameState interface.
+ */
+
 // Resource types
-export interface Resources {
-  [resourceId: string]: number;
-}
-
-export interface SpecialResource {
-  current: number;
-  max: number;
-  regenRate: number;
-}
-
-export interface SpecialResources {
-  stamina: SpecialResource;
-  health: SpecialResource;
-}
+export type { Resources, SpecialResource, SpecialResources } from './resources';
 
 // Action types
-export type ActionCategory = 'resource-producing' | 'resource-processing' | 'timed' | 'unlock';
-
-export interface ActionDefinition {
-  id: string;
-  name: string;
-  category: ActionCategory;
-  inputs: { [resourceId: string]: number };
-  outputs: { [resourceId: string]: number };
-  staminaCost?: number;
-  duration?: number;  // 0 = instant, >0 = timed
-  skillXp?: { [skillId: string]: number };
-  requiredSkill?: { skillId: string; level: number };
-  unlockCost?: { [resourceId: string]: number };
-  rankBonus: (executions: number) => number;
-  effect?: string;  // For unlock actions: 'unlock-spell-slot', 'unlock-action', etc.
-  value?: SkillBonusValue;  // Value associated with the effect
-}
-
-export interface ActionState {
-  executionCount: number;
-  isUnlocked: boolean;
-  isActive: boolean;
-  lastExecution: number;
-}
+export type { ActionCategory, ActionDefinition, ActionState } from './actions';
 
 // Skill types
-export interface SkillDefinition {
-  id: string;
-  name: string;
-  xpTable: number[];
-  bonuses: SkillBonus[];
-}
-
-export type SkillBonusValue = string | number | boolean;
-
-export interface SkillBonus {
-  level: number;
-  effect: string;
-  value: SkillBonusValue;
-}
-
-export interface SkillState {
-  level: number;
-  experience: number;
-}
+export type { SkillBonusValue, SkillBonus, SkillDefinition, SkillState } from './skills';
 
 // Spell types
-export interface SpellDefinition {
-  id: string;
-  name: string;
-  description: string;
-  cooldown: number;
-  effect: (state: GameState) => number;
-}
-
-export interface SpellState {
-  slots: number;
-  equipped: string[];
-  cooldowns: { [spellId: string]: number };
-}
-
-export type CombatLogEntry = {
-  type: 'player-attack' | 'enemy-attack' | 'spell-cast' | 'enemy-defeat';
-  message: string;
-  timestamp: number;
-};
+export type { SpellDefinition, SpellState } from './spells';
 
 // Combat types
-export interface Enemy {
-  id: string;
-  name: string;
-  health: number;
-  maxHealth: number;
-  damage: number;
-  attackInterval: number;
-  rewards: { [resourceId: string]: number };
-}
+export type { CombatLogEntry, Enemy, CombatState, DungeonDefinition } from './combat';
 
-export interface CombatState {
-  isActive: boolean;
-  currentEnemy: Enemy | null;
-  playerAttackTimer: number;
-  enemyAttackTimer: number;
-  log: CombatLogEntry[];
-}
+// Import types for use in GameState interface
+import type { Resources, SpecialResources } from './resources';
+import type { ActionState } from './actions';
+import type { SkillState } from './skills';
+import type { SpellState } from './spells';
+import type { CombatState } from './combat';
 
-// Dungeon types
-export interface DungeonDefinition {
-  id: string;
-  name: string;
-  description: string;
-  enemies: string[];  // Enemy IDs that spawn in this dungeon
-  difficulty: number;
-  levelRequirement: number;
-}
-
-// Main game state
+/**
+ * Main game state.
+ * Combines all domain-specific states into a single interface.
+ */
 export interface GameState {
   resources: Resources;
   specialResources: SpecialResources;

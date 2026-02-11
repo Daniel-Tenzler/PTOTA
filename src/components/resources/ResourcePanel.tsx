@@ -1,6 +1,6 @@
 import { useGameStore } from '../../stores/gameStore';
-import { isStudyAction, ALL_ACTION_DEFS } from '../../systems/actions';
-import { SKILL_DEFS } from '../../data/skills';
+import { ALL_ACTION_DEFS } from '../../systems/actions';
+import { ActiveTimedActionDisplay } from './ActiveTimedActionDisplay';
 
 // Define display order for resources. Any resource added to the store
 // will automatically appear here - order is controlled by this list.
@@ -98,35 +98,6 @@ function SpecialResourceRow({ name, current, max }: { name: string; current: num
           style={{ width: `${percent}%` }}
         />
       </div>
-    </div>
-  );
-}
-
-function ActiveTimedActionDisplay({ actionId }: { actionId: string }) {
-  const def = ALL_ACTION_DEFS[actionId];
-
-  if (!def) return null;
-
-  // For study actions, show "Studying [Skill Name]"
-  // For regular timed actions, show the action name
-  if (isStudyAction(actionId)) {
-    const skillId = actionId.replace('study-', '') as keyof typeof SKILL_DEFS;
-    const skillDef = SKILL_DEFS[skillId];
-
-    if (!skillDef) return null;
-
-    return (
-      <div className="text-sm">
-        <span className="text-gray-400">Active: </span>
-        <span className="text-gray-300">Studying {skillDef.name}</span>
-      </div>
-    );
-  }
-
-  return (
-    <div className="text-sm">
-      <span className="text-gray-400">Active: </span>
-      <span className="text-gray-300">{def.name}</span>
     </div>
   );
 }

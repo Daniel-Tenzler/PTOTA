@@ -1,5 +1,7 @@
 import type { GameState, ActionDefinition } from '../types';
 import { ACTION_DEFS } from '../data/actions';
+import { createActionState } from './actions/actionFactory';
+import { awardSkillXp } from './skills/skillUtils';
 
 export function canExecuteUnlockAction(
   state: GameState,
@@ -41,14 +43,7 @@ export function executeUnlockAction(
   // Award skill XP
   if (definition.skillXp) {
     for (const [skillId, xp] of Object.entries(definition.skillXp)) {
-      const currentSkill = state.skills[skillId] || { level: 1, experience: 0 };
-      updates.skills = {
-        ...updates.skills,
-        [skillId]: {
-          ...currentSkill,
-          experience: currentSkill.experience + xp,
-        },
-      };
+      Object.assign(updates, awardSkillXp(state, skillId, xp));
     }
   }
 
@@ -65,12 +60,7 @@ export function executeUnlockAction(
     if (newActionDef) {
       updates.actions = {
         ...updates.actions,
-        [newActionId]: {
-          executionCount: 0,
-          isUnlocked: true,
-          isActive: false,
-          lastExecution: 0,
-        },
+        [newActionId]: createActionState(true),
       };
     }
   }

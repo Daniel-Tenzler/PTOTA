@@ -1,6 +1,7 @@
 import type { GameState, SkillDefinition, SkillState } from '../types';
 import { SKILL_DEFS } from '../data/skills';
 import { ACTION_DEFS, STUDY_ACTIONS } from '../data/actions';
+import { createActionState } from './actions/actionFactory';
 
 export function checkSkillLevelUps(
   state: GameState
@@ -31,12 +32,7 @@ export function checkSkillLevelUps(
         if (bonus.effect === 'unlock-action') {
           updates.actions = {
             ...updates.actions,
-            [bonus.value as string]: {
-              executionCount: 0,
-              isUnlocked: true,
-              isActive: false,
-              lastExecution: 0,
-            },
+            [bonus.value as string]: createActionState(true),
           };
         } else if (bonus.effect === 'unlock-skill') {
           // Unlock all actions that grant XP to this skill
@@ -45,12 +41,7 @@ export function checkSkillLevelUps(
             if (actionDef.skillXp && actionDef.skillXp[skillId]) {
               updates.actions = {
                 ...updates.actions,
-                [actionId]: {
-                  executionCount: 0,
-                  isUnlocked: true,
-                  isActive: false,
-                  lastExecution: 0,
-                },
+                [actionId]: createActionState(true),
               };
             }
           }

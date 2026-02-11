@@ -3,12 +3,14 @@ import { DUNGEON_DEFS } from '../../data/dungeons';
 import { startCombat, stopCombat } from '../../systems/combat';
 import { PLAYER_ATTACK_INTERVAL } from '../../constants/combat';
 import { ProgressBar } from './ProgressBar';
+import type { CombatLogEntry } from '../../types';
 
 export function CombatView() {
   const combat = useGameStore((s) => s.combat);
   const health = useGameStore((s) => s.specialResources.health);
   const dungeons = useGameStore((s) => s.dungeons);
   const arcaneLevel = useGameStore((s) => s.skills.arcane?.level || 1);
+  const selectDungeon = useGameStore((s) => s.selectDungeon);
 
   if (!combat.isActive) {
     // Show dungeon selection
@@ -22,12 +24,7 @@ export function CombatView() {
               <button
                 key={dungeon.id}
                 onClick={() => {
-                  useGameStore.setState({
-                    dungeons: {
-                      ...dungeons,
-                      selected: dungeon.id
-                    }
-                  });
+                  selectDungeon(dungeon.id);
                   useGameStore.getState().updateCombat(startCombat);
                 }}
                 className={`
@@ -107,7 +104,7 @@ export function CombatView() {
           <div className="bg-gray-800 p-4 rounded">
             <div className="text-sm font-semibold text-gray-400 mb-2">Combat Log</div>
             <div className="space-y-1 max-h-40 overflow-y-auto">
-              {combat.log.slice().reverse().map((entry) => (
+              {combat.log.slice().reverse().map((entry: CombatLogEntry) => (
                 <div
                   key={entry.timestamp}
                   className={`text-xs ${

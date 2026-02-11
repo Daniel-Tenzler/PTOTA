@@ -28,7 +28,7 @@ export const createSpellsSlice = (
     set({
       spells: {
         ...state.spells,
-        equipped: state.spells.equipped.filter((id) => id !== spellId),
+        equipped: state.spells.equipped.filter((id: string) => id !== spellId),
         cooldowns: {
           ...state.spells.cooldowns,
           [spellId]: 0,

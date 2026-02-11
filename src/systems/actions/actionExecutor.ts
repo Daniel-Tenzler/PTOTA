@@ -1,5 +1,13 @@
 import type { GameState, ActionDefinition, ActionState } from '../../types';
 import { executeUnlockAction as execUnlock } from '../unlockActions';
+import { createActionState } from './actionFactory';
+import {
+  consumeInputs,
+  consumeStamina,
+  produceOutputs,
+  awardActionSkillXp,
+  updateActionState,
+} from './actionProcessors';
 
 /**
  * Action execution system.
@@ -33,84 +41,26 @@ export function executeAction(
   }
 
   const updates: Partial<GameState> = {};
-  const actionState: ActionState = state.actions[actionId] || {
-    executionCount: 0,
-    isUnlocked: true,
-    isActive: false,
-    lastExecution: 0,
-  };
+  const actionState: ActionState = state.actions[actionId] || createActionState(true);
 
   const rankBonus = definition.rankBonus(actionState.executionCount);
 
   // Consume inputs
-  for (const [resource, amount] of Object.entries(definition.inputs)) {
-    updates.resources = {
-      ...updates.resources,
-      [resource]: state.resources[resource] - amount,
-    };
-  }
+  Object.assign(updates, consumeInputs(state, definition));
 
   // Consume stamina
-  if (definition.staminaCost) {
-    updates.specialResources = {
-      ...state.specialResources,
-      ...updates.specialResources,
-      stamina: {
-        ...state.specialResources.stamina,
-        current: state.specialResources.stamina.current - definition.staminaCost,
-      },
-    };
-  }
+  Object.assign(updates, consumeStamina(state, definition));
 
   // Apply outputs with rank bonus
-  for (const [resource, amount] of Object.entries(definition.outputs)) {
-    const bonusAmount = amount * (1 + rankBonus);
-
-    // Handle stamina as a special resource
-    if (resource === 'stamina') {
-      const currentStamina = state.specialResources.stamina.current;
-      const maxStamina = state.specialResources.stamina.max;
-      const newStamina = Math.min(maxStamina, currentStamina + bonusAmount);
-      updates.specialResources = {
-        ...state.specialResources,
-        ...updates.specialResources,
-        stamina: {
-          ...state.specialResources.stamina,
-          current: newStamina,
-        },
-      };
-    } else {
-      // Regular resources
-      const currentAmount = state.resources[resource] || 0;
-      updates.resources = {
-        ...updates.resources,
-        [resource]: currentAmount + bonusAmount,
-      };
-    }
-  }
+  Object.assign(updates, produceOutputs(state, definition, rankBonus));
 
   // Award skill XP
-  if (definition.skillXp) {
-    for (const [skillId, xp] of Object.entries(definition.skillXp)) {
-      const currentSkill = state.skills[skillId] || { level: 1, experience: 0 };
-      updates.skills = {
-        ...updates.skills,
-        [skillId]: {
-          ...currentSkill,
-          experience: currentSkill.experience + xp,
-        },
-      };
-    }
-  }
+  Object.assign(updates, awardActionSkillXp(state, definition));
 
   // Update execution count
   updates.actions = {
     ...updates.actions,
-    [actionId]: {
-      ...actionState,
-      executionCount: actionState.executionCount + 1,
-      lastExecution: Date.now(),
-    },
+    [actionId]: updateActionState(actionState),
   };
 
   return updates;

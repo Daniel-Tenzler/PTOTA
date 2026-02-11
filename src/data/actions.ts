@@ -1,166 +1,157 @@
 import type { ActionDefinition } from '../types';
-import { standardRankBonus } from '../utils/rankBonus';
+import { standardRankBonus, noRankBonus } from '../utils/rankBonus';
 
-export const ACTION_DEFS: Record<string, ActionDefinition> = {
-  'gain-gold': {
+/**
+ * Action factory functions.
+ * Provides factory methods to create action definitions with common patterns.
+ */
+
+/**
+ * Creates a resource-producing action definition.
+ * Resource-producing actions convert stamina (and optionally inputs) into outputs.
+ *
+ * @param config - Action configuration
+ * @returns A resource-producing action definition
+ */
+function createResourceAction(config: {
+  id: string;
+  name: string;
+  outputs: Record<string, number>;
+  skillId: string;
+  inputs?: Record<string, number>;
+  xp?: number;
+}): ActionDefinition {
+  return {
+    id: config.id,
+    name: config.name,
+    category: 'resource-producing',
+    inputs: config.inputs || {},
+    outputs: config.outputs,
+    staminaCost: 1,
+    duration: 0,
+    skillXp: { [config.skillId]: config.xp ?? 1 },
+    rankBonus: standardRankBonus,
+  };
+}
+
+/**
+ * Creates a study action definition for the given skill.
+ * Study actions are timed actions that grant XP in a specific discipline.
+ */
+function createStudyAction(
+  skillId: string,
+  displayName: string
+): ActionDefinition {
+  return {
+    id: `study-${skillId}`,
+    name: `Study ${displayName}`,
+    category: 'timed',
+    inputs: {},
+    outputs: {},
+    duration: 1,
+    skillXp: { [skillId]: 1 },
+    rankBonus: noRankBonus,
+  };
+}
+
+/**
+ * Display names for study actions.
+ * Maps skill IDs to their human-readable display names.
+ */
+const STUDY_ACTION_DISPLAY_NAMES: Record<string, string> = {
+  arcane: 'Arcane',
+  pyromancy: 'Pyromancy',
+  hydromancy: 'Hydromancy',
+  geomancy: 'Geomancy',
+  necromancy: 'Necromancy',
+  alchemy: 'Alchemy',
+  aeromancy: 'Aeromancy',
+};
+
+/**
+ * Generates all study action definitions.
+ */
+export const STUDY_ACTIONS: Record<string, ActionDefinition> = Object.fromEntries(
+  Object.entries(STUDY_ACTION_DISPLAY_NAMES).map(([skillId, displayName]) => [
+    `study-${skillId}`,
+    createStudyAction(skillId, displayName),
+  ])
+);
+
+/**
+ * Base resource-producing actions.
+ * Actions that gather or produce resources using stamina.
+ */
+const RESOURCE_ACTIONS: Omit<ActionDefinition, 'rankBonus'>[] = [
+  // Arcane actions
+  createResourceAction({
     id: 'gain-gold',
     name: 'Gain Gold',
-    category: 'resource-producing',
-    inputs: {},
     outputs: { gold: 1 },
-    staminaCost: 1,
-    duration: 0,
-    skillXp: { arcane: 1 },
-    rankBonus: standardRankBonus,
-  },
-  'write-scrolls': {
+    skillId: 'arcane',
+  }),
+  createResourceAction({
     id: 'write-scrolls',
     name: 'Write Scrolls',
-    category: 'resource-producing',
     inputs: { gold: 2 },
     outputs: { scrolls: 1 },
-    staminaCost: 1,
-    duration: 0,
-    skillXp: { arcane: 2 },
-    rankBonus: standardRankBonus,
-  },
-  'gather-ash': {
+    skillId: 'arcane',
+    xp: 2,
+  }),
+
+  // Pyromancy actions
+  createResourceAction({
     id: 'gather-ash',
     name: 'Gather Ash',
-    category: 'resource-producing',
-    inputs: {},
     outputs: { ash: 1 },
-    staminaCost: 1,
-    duration: 0,
-    skillXp: { pyromancy: 1 },
-    rankBonus: standardRankBonus,
-  },
-  'collect-spring-water': {
+    skillId: 'pyromancy',
+  }),
+
+  // Hydromancy actions
+  createResourceAction({
     id: 'collect-spring-water',
     name: 'Collect Spring Water',
-    category: 'resource-producing',
-    inputs: {},
     outputs: { springWater: 1 },
-    staminaCost: 1,
-    duration: 0,
-    skillXp: { hydromancy: 1 },
-    rankBonus: standardRankBonus,
-  },
-  'mine-ore': {
+    skillId: 'hydromancy',
+  }),
+
+  // Geomancy actions
+  createResourceAction({
     id: 'mine-ore',
     name: 'Mine Ore',
-    category: 'resource-producing',
-    inputs: {},
     outputs: { ore: 1 },
-    staminaCost: 1,
-    duration: 0,
-    skillXp: { geomancy: 1 },
-    rankBonus: standardRankBonus,
-  },
-  'harvest-bone-dust': {
+    skillId: 'geomancy',
+  }),
+
+  // Necromancy actions
+  createResourceAction({
     id: 'harvest-bone-dust',
     name: 'Harvest Bone Dust',
-    category: 'resource-producing',
-    inputs: {},
     outputs: { boneDust: 1 },
-    staminaCost: 1,
-    duration: 0,
-    skillXp: { necromancy: 1 },
-    rankBonus: standardRankBonus,
-  },
-  'transmute-void-salts': {
+    skillId: 'necromancy',
+  }),
+
+  // Alchemy actions
+  createResourceAction({
     id: 'transmute-void-salts',
     name: 'Transmute Void Salts',
-    category: 'resource-producing',
-    inputs: {},
     outputs: { voidSalts: 1 },
-    staminaCost: 1,
-    duration: 0,
-    skillXp: { alchemy: 1 },
-    rankBonus: standardRankBonus,
-  },
-  'capture-storm-glass': {
+    skillId: 'alchemy',
+  }),
+
+  // Aeromancy actions
+  createResourceAction({
     id: 'capture-storm-glass',
     name: 'Capture Storm Glass',
-    category: 'resource-producing',
-    inputs: {},
     outputs: { stormGlass: 1 },
-    staminaCost: 1,
-    duration: 0,
-    skillXp: { aeromancy: 1 },
-    rankBonus: standardRankBonus,
-  },
-};
+    skillId: 'aeromancy',
+  }),
+];
 
-export const STUDY_ACTIONS: Record<string, ActionDefinition> = {
-  'study-arcane': {
-    id: 'study-arcane',
-    name: 'Study Arcane',
-    category: 'timed',
-    inputs: {},
-    outputs: {},
-    duration: 1,
-    skillXp: { arcane: 1 },
-    rankBonus: () => 0,
-  },
-  'study-pyromancy': {
-    id: 'study-pyromancy',
-    name: 'Study Pyromancy',
-    category: 'timed',
-    inputs: {},
-    outputs: {},
-    duration: 1,
-    skillXp: { pyromancy: 1 },
-    rankBonus: () => 0,
-  },
-  'study-hydromancy': {
-    id: 'study-hydromancy',
-    name: 'Study Hydromancy',
-    category: 'timed',
-    inputs: {},
-    outputs: {},
-    duration: 1,
-    skillXp: { hydromancy: 1 },
-    rankBonus: () => 0,
-  },
-  'study-geomancy': {
-    id: 'study-geomancy',
-    name: 'Study Geomancy',
-    category: 'timed',
-    inputs: {},
-    outputs: {},
-    duration: 1,
-    skillXp: { geomancy: 1 },
-    rankBonus: () => 0,
-  },
-  'study-necromancy': {
-    id: 'study-necromancy',
-    name: 'Study Necromancy',
-    category: 'timed',
-    inputs: {},
-    outputs: {},
-    duration: 1,
-    skillXp: { necromancy: 1 },
-    rankBonus: () => 0,
-  },
-  'study-alchemy': {
-    id: 'study-alchemy',
-    name: 'Study Alchemy',
-    category: 'timed',
-    inputs: {},
-    outputs: {},
-    duration: 1,
-    skillXp: { alchemy: 1 },
-    rankBonus: () => 0,
-  },
-  'study-aeromancy': {
-    id: 'study-aeromancy',
-    name: 'Study Aeromancy',
-    category: 'timed',
-    inputs: {},
-    outputs: {},
-    duration: 1,
-    skillXp: { aeromancy: 1 },
-    rankBonus: () => 0,
-  },
-};
+/**
+ * All base action definitions.
+ * Apply rankBonus function to each resource action.
+ */
+export const ACTION_DEFS: Record<string, ActionDefinition> = Object.fromEntries(
+  RESOURCE_ACTIONS.map(action => [action.id, { ...action, rankBonus: standardRankBonus }])
+);

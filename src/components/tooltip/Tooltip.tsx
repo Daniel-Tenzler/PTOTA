@@ -1,7 +1,9 @@
-import { useLayoutEffect, useEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { calculatePosition } from './positioning.tsx';
+import { useTooltipPositioning } from './useTooltipPositioning';
+import { calculatePosition } from './positioning';
 import type { Placement } from './types';
+import type { PositionState } from './useTooltipPositioning';
 
 interface TooltipProps {
   visible: boolean;
@@ -11,9 +13,6 @@ interface TooltipProps {
   className?: string;
 }
 
-const MAX_POSITIONING_ATTEMPTS = 10;
-const POSITIONING_RETRY_DELAY = 50;
-
 export function Tooltip({
   visible,
   content,
@@ -21,26 +20,19 @@ export function Tooltip({
   placement = 'top',
   className = '',
 }: TooltipProps) {
-  const [position, setPosition] = useState<{
-    style: React.CSSProperties;
-    isPositioned: boolean;
-  }>({
-    style: { opacity: 0, left: 0, top: 0, position: 'fixed', pointerEvents: 'none' },
-    isPositioned: false,
-  });
   const tooltipRef = useRef<HTMLDivElement>(null);
-  const positioningAttemptsRef = useRef(0);
+  const { position, setPosition, resetPosition, updatePosition } = useTooltipPositioning(
+    visible,
+    triggerRef,
+    placement
+  );
 
   // Reset position state when visibility changes
   useEffect(() => {
     if (!visible) {
-      setPosition({
-        style: { opacity: 0, left: 0, top: 0, position: 'fixed', pointerEvents: 'none' },
-        isPositioned: false,
-      });
-      positioningAttemptsRef.current = 0;
+      resetPosition();
     }
-  }, [visible]);
+  }, [visible, resetPosition]);
 
   // Use useLayoutEffect for immediate DOM measurement
   useLayoutEffect(() => {
@@ -48,31 +40,13 @@ export function Tooltip({
       return;
     }
 
-    const updatePosition = () => {
-      if (!tooltipRef.current || !triggerRef.current) return;
-
-      const triggerRect = triggerRef.current.getBoundingClientRect();
-      const tooltipRect = tooltipRef.current.getBoundingClientRect();
-
-      // Check if tooltip has valid dimensions
-      if (tooltipRect.width > 0 && tooltipRect.height > 0) {
-        const result = calculatePosition(triggerRect, tooltipRect, placement);
-        // Set opacity to 1 when positioned to make it visible
-        setPosition({ style: { ...result.style, opacity: 1 }, isPositioned: true });
-        positioningAttemptsRef.current = 0;
-      } else if (positioningAttemptsRef.current < MAX_POSITIONING_ATTEMPTS) {
-        // Retry after a short delay
-        positioningAttemptsRef.current++;
-        setTimeout(updatePosition, POSITIONING_RETRY_DELAY);
-      }
-    };
-
     // Use double rAF to ensure DOM is fully rendered
     requestAnimationFrame(() => {
-      requestAnimationFrame(updatePosition);
+      requestAnimationFrame(() => updatePosition(tooltipRef));
     });
-  }, [visible, placement, triggerRef]);
+  }, [visible, placement, triggerRef, updatePosition]);
 
+  // Handle resize events to reposition tooltip
   useEffect(() => {
     if (!visible) return;
 
@@ -83,7 +57,8 @@ export function Tooltip({
       if (tooltipRect.width > 0 && tooltipRect.height > 0) {
         const result = calculatePosition(triggerRect, tooltipRect, placement);
         // Maintain opacity 1 during resize
-        setPosition({ style: { ...result.style, opacity: 1 }, isPositioned: true });
+        const newState: PositionState = { style: { ...result.style, opacity: 1 }, isPositioned: true };
+        setPosition(newState);
       }
     };
 
@@ -98,7 +73,7 @@ export function Tooltip({
       resizeObserver.disconnect();
       window.removeEventListener('resize', handleResize);
     };
-  }, [visible, placement, triggerRef]);
+  }, [visible, placement, triggerRef, setPosition]);
 
   if (!visible) {
     return null;
