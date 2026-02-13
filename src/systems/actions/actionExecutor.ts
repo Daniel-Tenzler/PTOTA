@@ -8,6 +8,7 @@ import {
   awardActionSkillXp,
   updateActionState,
 } from './actionProcessors';
+import { accumulateUpdates } from '../../utils/merge/accumulateUpdates';
 
 /**
  * Action execution system.
@@ -40,22 +41,17 @@ export function executeAction(
     return execUnlock(state, actionId, definition);
   }
 
-  const updates: Partial<GameState> = {};
   const actionState: ActionState = state.actions[actionId] || createActionState(true);
 
   const rankBonus = definition.rankBonus(actionState.executionCount);
 
-  // Consume inputs
-  Object.assign(updates, consumeInputs(state, definition));
+  // Accumulate all updates using proper merge utility
+  let updates: Partial<GameState> = {};
 
-  // Consume stamina
-  Object.assign(updates, consumeStamina(state, definition));
-
-  // Apply outputs with rank bonus
-  Object.assign(updates, produceOutputs(state, definition, rankBonus));
-
-  // Award skill XP
-  Object.assign(updates, awardActionSkillXp(state, definition));
+  updates = accumulateUpdates(updates, consumeInputs(state, definition), state);
+  updates = accumulateUpdates(updates, consumeStamina(state, definition), state);
+  updates = accumulateUpdates(updates, produceOutputs(state, definition, rankBonus), state);
+  updates = accumulateUpdates(updates, awardActionSkillXp(state, definition), state);
 
   // Update execution count
   updates.actions = {

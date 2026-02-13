@@ -2,6 +2,7 @@ import type { GameState, ActionDefinition } from '../../types';
 import { SKILL_DEFS } from '../../data/skills';
 import { canExecuteUnlockAction } from '../unlockActions';
 import { isStudyAction } from './actionRegistry';
+import { STARTER_ACTIONS } from '../../config/initialState';
 
 /**
  * Action validation system.
@@ -39,8 +40,7 @@ export function canExecuteAction(
   // Check if unlocked
   if (!action?.isUnlocked) {
     // Starter actions are auto-unlocked
-    const isStarter = actionId === 'gain-gold' || actionId === 'write-scrolls' || actionId === 'meditate';
-    if (!isStarter) return false;
+    if (!STARTER_ACTIONS.has(actionId)) return false;
   }
 
   // Check stamina

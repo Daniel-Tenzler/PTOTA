@@ -6,7 +6,7 @@ import { ALL_ACTION_DEFS } from '../systems/actions';
  * Starter actions that are unlocked by default.
  * These represent the basic actions available when a new game begins.
  */
-const STARTER_ACTIONS = new Set([
+export const STARTER_ACTIONS = new Set([
   'gain-gold',
   'write-scrolls',
   'meditate',
