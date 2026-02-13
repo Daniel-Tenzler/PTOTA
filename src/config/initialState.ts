@@ -49,6 +49,9 @@ export const DEFAULT_STATE: GameState = {
     ash: 0,
     springWater: 0,
     ore: 0,
+    // Advanced elemental resources
+    voidSalts: 0,
+    stormGlass: 0,
   },
   specialResources: {
     stamina: {
@@ -90,6 +93,14 @@ export const DEFAULT_STATE: GameState = {
   dungeons: {
     unlocked: ['dark-forest'],
     selected: null,
+  },
+  housing: {
+    ownedHouses: ['shelter'], // Start with basic shelter
+    equippedItems: {
+      shelter: [],
+    },
+    unlockedItems: [], // No items unlocked initially
+    itemLocation: {}, // Reverse lookup for unequip
   },
   lastUpdate: Date.now(),
   activeTab: 'actions',

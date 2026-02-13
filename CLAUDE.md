@@ -143,6 +143,7 @@ All systems are designed to be modular and data-driven with **no hardcoded assum
 - Minimal, uncluttered
 - No visual noise or excessive numbers
 - Action buttons show only name on hover tooltip (inputs, outputs, duration)
+- **Use custom Tooltip component for all tooltips** - Do NOT use native browser tooltips
 
 ## Design Constraints
 

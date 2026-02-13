@@ -63,6 +63,15 @@ export function executeUnlockAction(
         [newActionId]: createActionState(true),
       };
     }
+  } else if (effect === 'unlock-housing-item') {
+    const itemId = definition.value as string;
+    // Prevent duplicate unlocks
+    if (!state.housing.unlockedItems.includes(itemId)) {
+      updates.housing = {
+        ...state.housing,
+        unlockedItems: [...state.housing.unlockedItems, itemId],
+      };
+    }
   }
 
   // Remove the unlock action from available actions

@@ -2,18 +2,31 @@ import type { GameState, SkillDefinition, SkillState } from '../types';
 import { SKILL_DEFS } from '../data/skills';
 import { ACTION_DEFS, STUDY_ACTIONS } from '../data/actions';
 import { createActionState } from './actions/actionFactory';
+import { getHousingBonuses } from './housing';
+import { HOUSING_ITEM_DEFS } from '../data/housing';
 
 export function checkSkillLevelUps(
   state: GameState
 ): Partial<GameState> {
   const updates: Partial<GameState> = {};
 
+  // Get housing bonuses for skill caps
+  const housingBonuses = getHousingBonuses(state, (id) => HOUSING_ITEM_DEFS[id]);
+
   for (const [skillId, skill] of Object.entries(state.skills)) {
     const def = SKILL_DEFS[skillId];
     if (!def) continue;
 
     const nextLevel = skill.level + 1;
-    if (nextLevel > def.xpTable.length) continue; // Max level
+    const baseMaxLevel = def.xpTable.length;
+
+    // Calculate housing skill cap bonus
+    let housingSkillBonus = housingBonuses.skillCap['all'] || 0; // Global bonus
+    housingSkillBonus += housingBonuses.skillCap[skillId] || 0; // Skill-specific bonus
+
+    const effectiveMaxLevel = baseMaxLevel + housingSkillBonus;
+
+    if (nextLevel > effectiveMaxLevel) continue; // Max level (including housing)
 
     const xpNeeded = def.xpTable[nextLevel - 1];
     if (skill.experience >= xpNeeded) {

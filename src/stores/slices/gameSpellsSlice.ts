@@ -3,7 +3,7 @@ import type { GameState } from '../../types';
 export interface GameSpellsSlice {
   equipSpell: (spellId: string) => void;
   unequipSpell: (spellId: string) => void;
-  setActiveTab: (tab: 'actions' | 'skills' | 'spells' | 'combat') => void;
+  setActiveTab: (tab: 'actions' | 'skills' | 'spells' | 'combat' | 'housing') => void;
 }
 
 export const createSpellsSlice = (

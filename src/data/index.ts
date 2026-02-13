@@ -5,3 +5,4 @@ export { SKILL_DEFS } from './skills';
 export { SPELL_DEFS } from './spells';
 export { ENEMY_DEFS, spawnEnemy, getRandomEnemy } from './enemies';
 export { DUNGEON_DEFS, getRandomEnemyFromDungeon, canAccessDungeon } from './dungeons';
+export { HOUSE_DEFS, HOUSING_ITEM_DEFS } from './housing';

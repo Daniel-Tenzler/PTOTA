@@ -1,11 +1,8 @@
 import type { GameState, Enemy, CombatLogEntry, CombatState, SpecialResources } from '../../types';
 import { PLAYER_ATTACK_INTERVAL, PLAYER_BASE_DAMAGE } from '../../constants/combat';
 import { addLogEntry, createPlayerAttackEntry, createEnemyAttackEntry } from './combatLogger';
-
-/**
- * Combat attack processing.
- * Handles player auto-attacks and enemy attacks during combat.
- */
+import { getHousingBonuses } from '../housing';
+import { HOUSING_ITEM_DEFS } from '../../data/housing';
 
 /**
  * Result of processing an attack.
@@ -17,7 +14,7 @@ export interface AttackResult {
 }
 
 /**
- * Helper to cast partial combat updates to the expected type.
+ * Helper to cast partial combat updates to expected type.
  * The caller (mergeCombatUpdates) will merge with base state,
  * so returning partial updates is safe.
  */
@@ -26,7 +23,7 @@ function asCombatUpdate(updates: Partial<CombatState>): Partial<GameState>['comb
 }
 
 /**
- * Helper to cast partial special resources updates to the expected type.
+ * Helper to cast partial special resources updates to expected type.
  * The merge functions in accumulateUpdates handle partial updates properly.
  */
 function asSpecialResourcesUpdate(updates: Partial<SpecialResources>): Partial<GameState>['specialResources'] {
@@ -64,7 +61,7 @@ interface AttackConfig {
  * @param delta - Time elapsed since last update (in seconds)
  * @param config - Attack configuration
  * @returns Attack result with state updates and defeat status
- * NOTE: Returns only the CHANGED fields, not the full combat state.
+ * NOTE: Returns only CHANGED fields, not full combat state.
  * The caller is responsible for merging with base state.
  */
 function processTimedAttack(
@@ -118,7 +115,8 @@ function processTimedAttack(
 
 /**
  * Calculates the damage dealt by the player per attack.
- * Base damage plus bonuses from skills (e.g., Arcane level).
+ * Base damage plus bonuses from skills (e.g., Arcane level)
+ * and housing combat damage bonuses.
  *
  * @param state - Current game state
  * @returns Total damage to deal
@@ -128,6 +126,11 @@ export function calculatePlayerDamage(state: GameState): number {
   let damage = PLAYER_BASE_DAMAGE;
   const arcaneLevel = state.skills.arcane?.level || 1;
   damage += arcaneLevel;
+
+  // Add housing combat damage bonus
+  const housingBonuses = getHousingBonuses(state, (id) => HOUSING_ITEM_DEFS[id]);
+  damage += housingBonuses.combatDamage;
+
   return damage;
 }
 
@@ -161,7 +164,7 @@ export function processPlayerAttack(state: GameState, delta: number, enemy: Enem
 }
 
 /**
- * Processes the enemy's attack during combat.
+ * Processes an enemy's attack during combat.
  * Updates the enemy attack timer and deals damage to player when ready.
  *
  * @param state - Current game state

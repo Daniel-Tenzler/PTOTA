@@ -1,9 +1,9 @@
 import { useGameStore } from '../../stores/gameStore';
 
 interface NavTabProps {
-  id: 'actions' | 'skills' | 'spells' | 'combat';
+  id: 'actions' | 'skills' | 'spells' | 'combat' | 'housing';
   active: boolean;
-  onClick: (id: 'actions' | 'skills' | 'spells' | 'combat') => void;
+  onClick: (id: 'actions' | 'skills' | 'spells' | 'combat' | 'housing') => void;
   children: React.ReactNode;
 }
 
@@ -24,7 +24,7 @@ function NavTab({ id, active, onClick, children }: NavTabProps) {
 
 export function LeftColumn() {
   const activeTab = useGameStore((s) => s.activeTab);
-  const setActiveTab = (tab: 'actions' | 'skills' | 'spells' | 'combat') => {
+  const setActiveTab = (tab: 'actions' | 'skills' | 'spells' | 'combat' | 'housing') => {
     useGameStore.getState().setActiveTab(tab);
   };
 
@@ -42,6 +42,9 @@ export function LeftColumn() {
         </NavTab>
         <NavTab id="combat" active={activeTab === 'combat'} onClick={setActiveTab}>
           Combat
+        </NavTab>
+        <NavTab id="housing" active={activeTab === 'housing'} onClick={setActiveTab}>
+          Housing
         </NavTab>
       </nav>
     </div>

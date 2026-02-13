@@ -47,6 +47,7 @@ function mergeCombatUpdates(
       logEntriesToAdd.push(...newEntries);
     }
     // Apply other updates (without log, we'll merge logs at the end)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { log: _playerLog, ...playerUpdatesWithoutLog } = playerCombat;
     mergedCombat = { ...mergedCombat, ...playerUpdatesWithoutLog };
   }
@@ -61,6 +62,7 @@ function mergeCombatUpdates(
       logEntriesToAdd.push(...newEntries);
     }
     // Apply other updates (without log, we'll merge logs at the end)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { log: _enemyLog, ...enemyUpdatesWithoutLog } = enemyCombat;
     mergedCombat = { ...mergedCombat, ...enemyUpdatesWithoutLog };
   }

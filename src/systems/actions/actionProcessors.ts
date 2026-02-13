@@ -1,5 +1,7 @@
 import type { GameState, ActionDefinition, ActionState, SpecialResources } from '../../types';
 import { awardSkillXp } from '../skills/skillUtils';
+import { getHousingBonuses } from '../housing';
+import { HOUSING_ITEM_DEFS } from '../../data/housing';
 
 /**
  * Helper functions for processing action inputs and outputs.
@@ -13,7 +15,7 @@ interface ResourceUpdate {
 
 /**
  * Consumes input resources for an action execution.
- * Returns the resource updates to apply.
+ * Returns resource updates to apply.
  */
 export function consumeInputs(
   state: GameState,
@@ -33,7 +35,7 @@ export function consumeInputs(
 
 /**
  * Consumes stamina for an action execution.
- * Returns the special resources updates to apply.
+ * Returns special resources updates to apply.
  */
 export function consumeStamina(
   state: GameState,
@@ -55,8 +57,8 @@ export function consumeStamina(
 }
 
 /**
- * Produces output resources with rank bonus applied.
- * Returns the resource updates to apply.
+ * Produces output resources with rank bonus and housing action bonus applied.
+ * Returns resource updates to apply.
  */
 export function produceOutputs(
   state: GameState,
@@ -65,8 +67,28 @@ export function produceOutputs(
 ): ResourceUpdate {
   const updates: ResourceUpdate = {};
 
+  // Get housing action bonuses
+  const housingBonuses = getHousingBonuses(state, (id) => HOUSING_ITEM_DEFS[id]);
+
+  // Calculate total action bonus (rank + housing)
+  // Housing bonuses are stored per-skill or as 'all' (global)
+  let totalActionBonus = rankBonus;
+
+  // Add per-skill housing bonuses
+  if (definition.skillXp) {
+    for (const skillId of Object.keys(definition.skillXp)) {
+      totalActionBonus += housingBonuses.actionBonus[skillId] || 0;
+    }
+  } else {
+    // No skillXp, use global bonus
+    totalActionBonus += housingBonuses.actionBonus['all'] || 0;
+  }
+
+  // Convert percentage to multiplier (e.g., 15% -> 0.15)
+  const bonusMultiplier = 1 + (totalActionBonus / 100);
+
   for (const [resource, amount] of Object.entries(definition.outputs)) {
-    const bonusAmount = amount * (1 + rankBonus);
+    const bonusAmount = amount * bonusMultiplier;
 
     // Handle stamina as a special resource
     if (resource === 'stamina') {
@@ -75,7 +97,6 @@ export function produceOutputs(
       const newStamina = Math.min(maxStamina, currentStamina + bonusAmount);
       updates.specialResources = {
         ...state.specialResources,
-        ...updates.specialResources,
         stamina: {
           ...state.specialResources.stamina,
           current: newStamina,
@@ -96,7 +117,7 @@ export function produceOutputs(
 
 /**
  * Awards skill XP for an action execution.
- * Returns the game state updates to apply.
+ * Returns game state updates to apply.
  */
 export function awardActionSkillXp(
   state: GameState,
@@ -107,15 +128,17 @@ export function awardActionSkillXp(
   }
 
   const updates: Partial<GameState> = {};
+
   for (const [skillId, xp] of Object.entries(definition.skillXp)) {
     Object.assign(updates, awardSkillXp(state, skillId, xp));
   }
+
   return updates;
 }
 
 /**
- * Updates the action state after execution.
- * Returns the updated action state.
+ * Updates action state after execution.
+ * Returns updated action state.
  */
 export function updateActionState(
   actionState: ActionState

@@ -48,7 +48,9 @@ export function actionRenderer({ definition, state }: ActionRendererProps) {
 
       {definition.effect ? (
         <div className="text-xs text-gray-500">
-          Effect: {definition.effect}
+          {definition.effect === 'unlock-housing-item'
+            ? `Unlocks housing item: ${definition.value}`
+            : `Effect: ${definition.effect}`}
         </div>
       ) : null}
 

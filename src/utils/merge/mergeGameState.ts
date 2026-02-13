@@ -24,5 +24,16 @@ export function mergeGameState(
     spells: mergeSpells(base.spells, updates.spells),
     combat: updates.combat ? { ...base.combat, ...updates.combat } : base.combat,
     dungeons: updates.dungeons ? { ...base.dungeons, ...updates.dungeons } : base.dungeons,
+    housing: updates.housing ? {
+      ...base.housing,
+      ...updates.housing,
+      // Deep merge nested objects to prevent data loss
+      equippedItems: updates.housing.equippedItems
+        ? { ...base.housing.equippedItems, ...updates.housing.equippedItems }
+        : base.housing.equippedItems,
+      itemLocation: updates.housing.itemLocation
+        ? { ...base.housing.itemLocation, ...updates.housing.itemLocation }
+        : base.housing.itemLocation,
+    } : base.housing,
   };
 }

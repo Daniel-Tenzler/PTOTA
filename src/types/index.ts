@@ -18,12 +18,22 @@ export type { SpellDefinition, SpellState } from './spells';
 // Combat types
 export type { CombatLogEntry, Enemy, CombatState, DungeonDefinition } from './combat';
 
+// Housing types
+export type {
+  HousingEffect,
+  HouseDefinition,
+  HousingItemDefinition,
+  HousingBonuses,
+  HousingState
+} from './housing';
+
 // Import types for use in GameState interface
 import type { Resources, SpecialResources } from './resources';
 import type { ActionState } from './actions';
 import type { SkillState } from './skills';
 import type { SpellState } from './spells';
 import type { CombatState } from './combat';
+import type { HousingState } from './housing';
 
 /**
  * Main game state.
@@ -40,6 +50,7 @@ export interface GameState {
     unlocked: string[];
     selected: string | null;
   };
+  housing: HousingState;
   lastUpdate: number;
-  activeTab: 'actions' | 'skills' | 'spells' | 'combat';
+  activeTab: 'actions' | 'skills' | 'spells' | 'combat' | 'housing';
 }

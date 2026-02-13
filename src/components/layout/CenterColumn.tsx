@@ -3,6 +3,7 @@ import { ActionsView } from '../actions/ActionsView';
 import { SkillsView } from '../skills/SkillsView';
 import { SpellsView } from '../spells/SpellsView';
 import { CombatView } from '../combat/CombatView';
+import { HousingView } from '../housing/HousingView';
 
 export function CenterColumn() {
   const activeTab = useGameStore((s) => s.activeTab);
@@ -13,6 +14,7 @@ export function CenterColumn() {
       {activeTab === 'skills' && <SkillsView />}
       {activeTab === 'spells' && <SpellsView />}
       {activeTab === 'combat' && <CombatView />}
+      {activeTab === 'housing' && <HousingView />}
     </div>
   );
 }
