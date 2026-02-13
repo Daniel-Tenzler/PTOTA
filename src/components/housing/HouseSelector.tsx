@@ -4,6 +4,7 @@ import { HOUSE_DEFS } from '../../data/housing';
 import { canAffordHouse } from '../../systems/housing';
 import type { GameState } from '../../types';
 import { useTooltip } from '../tooltip/index';
+import { HOUSE_ICONS, type HouseTier } from './housingIcons';
 
 interface HouseSelectorProps {
   housing: HousingState;
@@ -41,7 +42,7 @@ function houseTooltipRenderer({ name, description, space, cost }: HouseTooltipDa
   );
 }
 
-function HouseCard({
+function HouseRow({
   house,
   owned,
   canAfford,
@@ -52,6 +53,7 @@ function HouseCard({
   canAfford: boolean;
   onPurchase: () => void;
 }) {
+  const HouseIcon = HOUSE_ICONS[house.id as HouseTier];
   const tooltipData = {
     name: house.name,
     description: house.description,
@@ -65,27 +67,24 @@ function HouseCard({
   );
 
   return (
-    <div className={`bg-gray-800 rounded p-4 flex-1 min-w-[200px] flex flex-col ${
-      owned ? 'ring-2 ring-green-500' : ''
-    }`}>
-      <h3 className="text-lg font-medium mb-1">{house.name}</h3>
-      <span className="text-sm bg-gray-700 px-2 py-1 rounded">
-        {house.space} space
-      </span>
+    <div className="flex items-center gap-3 p-2 rounded hover:bg-gray-700/50 border-b border-gray-700 last:border-b-0">
+      <HouseIcon className="w-5 h-5 text-gray-400 flex-shrink-0" />
+      <div {...triggerProps} className="flex-1 min-w-0">
+        <span className="font-medium">{house.name}</span>
+        <span className="text-gray-400 ml-2">· {house.space} space</span>
+      </div>
       {tooltipElement}
       {owned ? (
-        <div className="text-green-400 text-sm">Owned</div>
+        <span className="px-2 py-1 rounded bg-green-900/50 text-green-400 text-sm">Owned</span>
       ) : canAfford ? (
         <button
-          {...triggerProps}
           onClick={onPurchase}
-          disabled={!canAfford}
-          className="mt-auto px-4 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+          className="px-3 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white text-sm transition-colors"
         >
           Purchase
         </button>
       ) : (
-        <div className="mt-auto text-sm text-gray-500">Cannot afford</div>
+        <span className="text-gray-500 text-sm">Cannot afford</span>
       )}
     </div>
   );
@@ -103,13 +102,13 @@ export function HouseSelector({ housing }: HouseSelectorProps) {
   return (
     <div>
       <h2 className="text-lg font-semibold mb-3">Houses</h2>
-      <div className="flex gap-3 overflow-x-auto pb-2">
+      <div className="flex flex-col bg-gray-800 rounded">
         {purchasableHouses.map((house) => {
           const owned = housing.ownedHouses.includes(house.id);
           const canAfford = canAffordHouse(state, house);
 
           return (
-            <HouseCard
+            <HouseRow
               key={house.id}
               house={house}
               owned={owned}

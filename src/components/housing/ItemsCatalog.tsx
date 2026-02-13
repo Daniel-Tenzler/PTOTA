@@ -4,6 +4,10 @@ import { HOUSING_ITEM_DEFS } from '../../data/housing';
 import { canAffordItem } from '../../systems/housing';
 import type { GameState } from '../../types';
 import { useTooltip } from '../tooltip/index';
+import { CATEGORY_ICONS, CATEGORY_COLORS } from './housingIcons';
+import type { ItemCategory } from './housingIcons';
+import { useMemo } from 'react';
+import { ItemCategoryGroup } from './ItemCategoryGroup';
 
 interface ItemsCatalogProps {
   housing: HousingState;
@@ -44,10 +48,10 @@ function itemTooltipRenderer({ name, description, space, effectString, cost, equ
   );
 }
 
-function ItemCard({
+export function ItemRow({
   item,
   equipped,
-  owned,
+  unlocked,
   canAfford,
   onEquip,
   onUnequip,
@@ -63,7 +67,7 @@ function ItemCard({
     requiresUnlock?: boolean;
   };
   equipped: boolean;
-  owned: boolean;
+  unlocked: boolean;
   canAfford: boolean;
   onEquip: () => void;
   onUnequip: () => void;
@@ -113,29 +117,35 @@ function ItemCard({
     tooltipData
   );
 
+  const effectCategory = item.effect as ItemCategory;
+  const ItemIcon = CATEGORY_ICONS[effectCategory];
+  const colorClass = CATEGORY_COLORS[effectCategory];
+
   return (
-    <div {...triggerProps} className={`bg-gray-800 rounded p-4 ${
-      equipped ? 'ring-2 ring-blue-500' : ''
-    }`}>
-      {tooltipElement}
-      <div className="flex justify-between items-start mb-2">
-        <h3 className="text-lg font-medium">{item.name}</h3>
-        <span className="text-sm bg-gray-700 px-2 py-1 rounded">
-          {item.space} space
-        </span>
+    <div
+      {...triggerProps}
+      className={`flex items-center gap-3 p-2 rounded hover:bg-gray-700/50 border-b border-gray-700 last:border-b-0 ${
+        equipped ? 'bg-blue-900/20' : ''
+      }`}
+    >
+      <ItemIcon className={`w-4 h-4 ${colorClass} flex-shrink-0`} aria-label={`${item.name} icon`} />
+      <div className="flex-1 min-w-0">
+        <span className="font-medium truncate">{item.name}</span>
+        <span className="text-gray-400 text-sm ml-2">· {item.space} space</span>
       </div>
+      {tooltipElement}
       {equipped ? (
         <button
           onClick={onUnequip}
-          className="w-full py-2 px-4 rounded bg-red-600 hover:bg-red-700 text-white transition-colors"
+          className="px-3 py-1 rounded bg-red-600 hover:bg-red-700 text-white text-sm transition-colors flex-shrink-0"
         >
           Unequip
         </button>
-      ) : owned ? (
+      ) : unlocked ? (
         <button
           onClick={onEquip}
           disabled={!canAfford}
-          className={`w-full py-2 px-4 rounded transition-colors ${
+          className={`px-3 py-1 rounded text-sm transition-colors flex-shrink-0 ${
             canAfford
               ? 'bg-blue-600 hover:bg-blue-700 text-white'
               : 'bg-gray-700 text-gray-500 cursor-not-allowed'
@@ -144,7 +154,7 @@ function ItemCard({
           Equip
         </button>
       ) : (
-        <div className="text-sm text-gray-500">Requires unlock</div>
+        <span className="text-gray-500 text-sm flex-shrink-0">Locked</span>
       )}
     </div>
   );
@@ -163,37 +173,58 @@ export function ItemsCatalog({ housing }: ItemsCatalogProps) {
   };
 
   // Create a flat map of all equipped items across all houses
-  const allEquippedItems = new Set<string>();
-  Object.values(housing.equippedItems).forEach((items) => {
-    items.forEach((itemId) => allEquippedItems.add(itemId));
-  });
+  const allEquippedItems = useMemo(() => {
+    const equipped = new Set<string>();
+    Object.values(housing.equippedItems).forEach((items) => {
+      items.forEach((itemId) => equipped.add(itemId));
+    });
+    return equipped;
+  }, [housing.equippedItems]);
+
+  // Group items by effect category
+  const itemsByCategory: Record<string, typeof HOUSING_ITEM_DEFS[string][]> = {};
+  Object.values(HOUSING_ITEM_DEFS)
+    .filter((item) => !item.requiresUnlock || housing.unlockedItems.includes(item.id))
+    .forEach((item) => {
+      if (!itemsByCategory[item.effect]) {
+        itemsByCategory[item.effect] = [];
+      }
+      itemsByCategory[item.effect].push(item);
+    });
+
+  // Category order
+  const categoryOrder: ItemCategory[] = ['skillCap', 'passiveGen', 'actionBonus', 'combatDamage', 'healthRegen', 'spellCooldown'];
 
   return (
     <div>
       <h2 className="text-lg font-semibold mb-3">Items</h2>
-      <div className="grid grid-cols-3 gap-4">
-        {Object.values(HOUSING_ITEM_DEFS)
-          .filter((item) => {
-            // Show item if it doesn't require unlock OR if it's unlocked
-            return !item.requiresUnlock || housing.unlockedItems.includes(item.id);
-          })
-          .map((item) => {
+      <div className="flex flex-col">
+        {categoryOrder.map((category) => {
+          const items = itemsByCategory[category];
+          if (!items || items.length === 0) return null;
+
+          const itemRows = items.map((item) => {
             const equipped = allEquippedItems.has(item.id);
             const canAfford = !equipped && canAffordItem(state, item);
             const unlocked = !item.requiresUnlock || housing.unlockedItems.includes(item.id);
 
             return (
-              <ItemCard
+              <ItemRow
                 key={item.id}
                 item={item}
                 equipped={equipped}
-                owned={unlocked}
+                unlocked={unlocked}
                 canAfford={canAfford}
                 onEquip={() => equipItem(getHouseToEquipTo(), item.id)}
                 onUnequip={() => unequipItemById(item.id)}
               />
             );
-          })}
+          });
+
+          return (
+            <ItemCategoryGroup key={category} category={category} items={itemRows} />
+          );
+        })}
       </div>
     </div>
   );
