@@ -5,41 +5,11 @@ import { canAffordHouse } from '../../systems/housing';
 import type { GameState } from '../../types';
 import { useTooltip } from '../tooltip/index';
 import { HOUSE_ICONS, type HouseTier } from './housingIcons';
+import { genericTooltipRenderer, formatHouseTooltipData } from '../tooltip/GenericTooltip';
 
 interface HouseSelectorProps {
   housing: HousingState;
   resources: Resources;
-}
-
-// House tooltip data interface
-interface HouseTooltipData {
-  name: string;
-  description: string;
-  space: number;
-  cost: Record<string, number>;
-}
-
-// House tooltip renderer
-function houseTooltipRenderer({ name, description, space, cost }: HouseTooltipData) {
-  return (
-    <div className="max-w-xs">
-      <div className="font-semibold mb-1">{name}</div>
-      <div className="text-sm text-gray-400 mb-2">{description}</div>
-      <div className="text-xs text-gray-500">
-        <div className="mb-1">Space: {space}</div>
-        {cost && Object.keys(cost).length > 0 && (
-          <div className="mt-2">
-            Cost:
-            {Object.entries(cost).map(([resource, amount]) => (
-              <div key={resource} className="text-sm">
-                {amount} {resource}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
 }
 
 function HouseRow({
@@ -54,15 +24,15 @@ function HouseRow({
   onPurchase: () => void;
 }) {
   const HouseIcon = HOUSE_ICONS[house.id as HouseTier];
-  const tooltipData = {
-    name: house.name,
-    description: house.description,
-    space: house.space,
-    cost: house.cost,
-  };
+  const tooltipData = formatHouseTooltipData(
+    house.name,
+    house.description,
+    house.space,
+    house.cost
+  );
 
   const { triggerProps, tooltipElement } = useTooltip(
-    houseTooltipRenderer,
+    genericTooltipRenderer,
     tooltipData
   );
 

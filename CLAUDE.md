@@ -50,7 +50,14 @@ src/
 │   ├── actions/         # Action buttons and tooltips (ActionButton, ActionsView)
 │   ├── skills/          # Skill display (SkillsView)
 │   ├── spells/          # Spell management (SpellsView)
-│   └── combat/          # Combat view (CombatView)
+│   ├── combat/          # Combat view (CombatView)
+│   ├── tooltip/         # Tooltip components
+│   │   ├── GenericTooltip.tsx   # Generic tooltip renderer
+│   │   └── positioning.tsx      # Tooltip positioning logic
+│   └── housing/         # Housing components
+│       ├── ItemsCatalog.tsx      # Item catalog
+│       ├── HouseSelector.tsx      # House selection
+│       └── housingIcons.tsx        # Housing icons/colors
 ├── stores/              # Zustand stores
 │   ├── gameStore.ts     # Main game state
 │   └── saveStore.ts     # Save/load utilities
@@ -61,10 +68,19 @@ src/
 │   ├── combat.ts        # Combat logic
 │   └── resources.ts     # Resource management
 ├── data/                # Data definitions
-│   ├── actions.ts       # Action definitions
+│   ├── actions/        # Action definitions (modular)
+│   │   ├── factories.ts          # Action factory functions
+│   │   ├── resourceActions.ts    # Resource-producing actions
+│   │   └── housingUnlockActions.ts # Housing unlock actions
+│   ├── actions.ts       # Main action exports (re-exports from actions/)
 │   ├── skills.ts        # Skill definitions
 │   ├── spells.ts        # Spell definitions
+│   ├── housing.ts       # House and item definitions
 │   └── enemies.ts       # Enemy definitions
+├── utils/               # Utility functions
+│   ├── immutableUpdates.ts  # Immutable state update utilities
+│   ├── rankBonus.ts      # Rank bonus calculations
+│   └── housingEffects.ts  # Housing effect formatting
 ├── hooks/               # Custom React hooks
 │   ├── useGameLoop.ts   # Game loop (requestAnimationFrame)
 │   └── useSave.ts       # Auto-save hook
@@ -147,6 +163,32 @@ All systems are designed to be modular and data-driven with **no hardcoded assum
 
 ## Design Constraints
 
+## Code Quality Improvements (2025-02)
+
+### Modular Action Definitions
+Action definitions are split into focused modules:
+- `src/data/actions/factories.ts` - Factory functions for creating actions
+- `src/data/actions/resourceActions.ts` - Base resource-producing actions
+- `src/data/actions/housingUnlockActions.ts` - Housing unlock actions
+- `src/data/actions.ts` - Main export point (re-exports from above)
+
+### Generic Tooltip Component
+- `src/components/tooltip/GenericTooltip.tsx` - Unified tooltip renderer
+- Works for both housing items and houses
+- Reduces code duplication
+
+### Immutable Update Utilities
+- `src/utils/immutableUpdates.ts` - Type-safe state update functions
+- Eliminates manual state spreading throughout codebase
+- Functions: `updateHousingEquippedItems`, `removeHousingItemLocation`, `mergeUpdates`, etc.
+
+### Generic Affordability Check
+- `src/systems/resources.ts` exports `canAfford()` generic utility
+- Works for any cost object (houses, items, actions)
+- `canAffordHouse()` and `canAffordItem()` are convenience wrappers
+
+## Design Constraints
+
 - No mobile support, no responsive design
 - Complexity emerges from system interaction, not UI density
 - UI must not attempt to explain everything at once
@@ -154,28 +196,13 @@ All systems are designed to be modular and data-driven with **no hardcoded assum
 ## Adding New Content
 
 ### Adding a New Action
-1. Add definition to `src/data/actions.ts`:
-```typescript
-export const ACTION_DEFS: Record<string, ActionDefinition> = {
-  'your-action': {
-    id: 'your-action',
-    name: 'Your Action',
-    category: 'resource-producing',
-    inputs: { gold: 5 },
-    outputs: { scrolls: 3 },
-    staminaCost: 1,
-    skillXp: { arcane: 2 },
-    rankBonus: (executions: number) => {
-      if (executions >= 100) return 0.2;
-      if (executions >= 10) return 0.1;
-      return 0;
-    },
-  },
-  // ... other actions
-};
-```
+1. Add definition using appropriate factory function in `src/data/actions/`:
+   - Use `createResourceAction()` for resource-producing actions
+   - Use `createTimedAction()` for timed actions
+   - Use manual definition for unlock actions (in `housingUnlockActions.ts`)
 2. Initialize action state in `src/stores/gameStore.ts`
 3. Add to action list in `src/components/actions/ActionsView.tsx`
+4. If unlocked by default, add to `STARTER_ACTIONS` in `src/config/initialState.ts`
 
 ### Adding a New Spell
 1. Add definition to `src/data/spells.ts`

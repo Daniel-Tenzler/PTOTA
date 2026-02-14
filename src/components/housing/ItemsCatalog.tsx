@@ -8,45 +8,12 @@ import { CATEGORY_ICONS, CATEGORY_COLORS } from './housingIcons';
 import type { ItemCategory } from './housingIcons';
 import { useMemo } from 'react';
 import { ItemCategoryGroup } from './ItemCategoryGroup';
+import { genericTooltipRenderer, formatItemTooltipData } from '../tooltip/GenericTooltip';
 import { formatEffectDescription } from '../../utils/housingEffects';
 
 interface ItemsCatalogProps {
   housing: HousingState;
   resources: Resources;
-}
-
-// Item tooltip data interface
-interface ItemTooltipData {
-  name: string;
-  description: string;
-  space: number;
-  effectString: string;
-  cost: Record<string, number>;
-  equipped: boolean;
-}
-
-// Item tooltip renderer
-function itemTooltipRenderer({ name, description, space, effectString, cost, equipped }: ItemTooltipData) {
-  return (
-    <div className="max-w-xs">
-      <div className="font-semibold mb-1">{name}</div>
-      <div className="text-sm text-gray-400 mb-2">{description}</div>
-      <div className="text-xs text-gray-500">
-        <div className="mb-1">{space} space</div>
-        <div className="mb-1">{effectString}</div>
-        {!equipped && cost && Object.keys(cost).length > 0 && (
-          <div>
-            Cost:
-            {Object.entries(cost).map(([resource, amount]) => (
-              <div key={resource} className="text-sm mt-1">
-                {amount} {resource}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
 }
 
 export function ItemRow({
@@ -74,18 +41,15 @@ export function ItemRow({
   onUnequip: () => void;
 }) {
   const effectString = formatEffectDescription(item as HousingItemDefinition);
-
-  const tooltipData = {
-    name: item.name,
-    description: item.description,
-    space: item.space,
+  const tooltipData = formatItemTooltipData(
+    item.name,
+    item.description,
+    item.space,
     effectString,
-    cost: item.cost,
-    equipped,
-  };
-
+    item.cost
+  );
   const { triggerProps, tooltipElement } = useTooltip(
-    itemTooltipRenderer,
+    genericTooltipRenderer,
     tooltipData
   );
 

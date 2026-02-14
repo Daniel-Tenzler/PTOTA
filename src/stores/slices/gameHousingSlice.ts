@@ -2,6 +2,7 @@ import type { GameState } from '../../types';
 import { canAffordHouse, canAffordItem, getSpaceUsed } from '../../systems/housing';
 import { HOUSE_DEFS, HOUSING_ITEM_DEFS } from '../../data/housing';
 import { deductCost } from '../../systems/resources';
+import { updateHousingEquippedItems, updateHousingItemLocation, removeHousingItemLocation, mergeUpdates } from '../../utils/immutableUpdates';
 
 export interface GameHousingSlice {
   purchaseHouse: (houseId: string) => void;
@@ -25,16 +26,19 @@ export const createHousingSlice = (
     // Deduct costs using centralized function
     const costUpdates = deductCost(state, house.cost);
 
+    // Add to owned houses and initialize empty equipped items
+    const housingUpdate = {
+      ...state.housing,
+      ownedHouses: [...state.housing.ownedHouses, houseId],
+      equippedItems: {
+        ...state.housing.equippedItems,
+        [houseId]: [],
+      },
+    };
+
     set({
       ...costUpdates,
-      housing: {
-        ...state.housing,
-        ownedHouses: [...state.housing.ownedHouses, houseId],
-        equippedItems: {
-          ...state.housing.equippedItems,
-          [houseId]: [],
-        },
-      },
+      housing: housingUpdate,
     });
   },
 
@@ -54,26 +58,19 @@ export const createHousingSlice = (
     const currentSpaceUsed = getSpaceUsed(state, houseId, (id) => HOUSING_ITEM_DEFS[id]);
     if (currentSpaceUsed + item.space > house.space) return;
 
-    // Get current equipped items for this house
-    const equippedItems = state.housing.equippedItems[houseId] || [];
-
     // Deduct costs using centralized function
     const costUpdates = deductCost(state, item.cost);
 
-    set({
-      ...costUpdates,
-      housing: {
-        ...state.housing,
-        equippedItems: {
-          ...state.housing.equippedItems,
-          [houseId]: [...equippedItems, itemId],
-        },
-        itemLocation: {
-          ...state.housing.itemLocation,
-          [itemId]: houseId,
-        },
-      },
-    });
+    // Get current equipped items for this house
+    const equippedItems = state.housing.equippedItems[houseId] || [];
+    const updatedEquippedItems = [...equippedItems, itemId];
+
+    // Merge updates: cost + equipped items + item location
+    set(mergeUpdates(
+      costUpdates,
+      updateHousingEquippedItems(state, houseId, updatedEquippedItems),
+      updateHousingItemLocation(state, { [itemId]: houseId })
+    ));
   },
 
   unequipItem: (houseId: string, itemId: string) => {
@@ -82,20 +79,13 @@ export const createHousingSlice = (
 
     if (!equippedItems.includes(itemId)) return;
 
-    // Remove from itemLocation
-    const newItemLocation = { ...state.housing.itemLocation };
-    delete newItemLocation[itemId];
+    const updatedEquippedItems = equippedItems.filter((id) => id !== itemId);
 
-    set({
-      housing: {
-        ...state.housing,
-        equippedItems: {
-          ...state.housing.equippedItems,
-          [houseId]: equippedItems.filter((id) => id !== itemId),
-        },
-        itemLocation: newItemLocation,
-      },
-    });
+    // Merge updates: remove from equipped items + remove from item location
+    set(mergeUpdates(
+      updateHousingEquippedItems(state, houseId, updatedEquippedItems),
+      removeHousingItemLocation(state, itemId)
+    ));
   },
 
   unequipItemById: (itemId: string) => {
@@ -106,19 +96,12 @@ export const createHousingSlice = (
     const equippedItems = state.housing.equippedItems[houseId] || [];
     if (!equippedItems.includes(itemId)) return;
 
-    // Remove from itemLocation
-    const newItemLocation = { ...state.housing.itemLocation };
-    delete newItemLocation[itemId];
+    const updatedEquippedItems = equippedItems.filter((id) => id !== itemId);
 
-    set({
-      housing: {
-        ...state.housing,
-        equippedItems: {
-          ...state.housing.equippedItems,
-          [houseId]: equippedItems.filter((id) => id !== itemId),
-        },
-        itemLocation: newItemLocation,
-      },
-    });
+    // Merge updates: remove from equipped items + remove from item location
+    set(mergeUpdates(
+      updateHousingEquippedItems(state, houseId, updatedEquippedItems),
+      removeHousingItemLocation(state, itemId)
+    ));
   },
 });
