@@ -1,4 +1,4 @@
-import type { HousingState, Resources } from '../../types';
+import type { HousingState, Resources, HousingItemDefinition } from '../../types';
 import { useGameStore } from '../../stores/gameStore';
 import { HOUSING_ITEM_DEFS } from '../../data/housing';
 import { canAffordItem } from '../../systems/housing';
@@ -8,6 +8,7 @@ import { CATEGORY_ICONS, CATEGORY_COLORS } from './housingIcons';
 import type { ItemCategory } from './housingIcons';
 import { useMemo } from 'react';
 import { ItemCategoryGroup } from './ItemCategoryGroup';
+import { formatEffectDescription } from '../../utils/housingEffects';
 
 interface ItemsCatalogProps {
   housing: HousingState;
@@ -72,36 +73,7 @@ export function ItemRow({
   onEquip: () => void;
   onUnequip: () => void;
 }) {
-  const effectString = (() => {
-    switch (item.effect) {
-      case 'skillCap':
-        if (typeof item.value === 'string') {
-          const parts = item.value.split(':');
-          return parts.length === 2 ? `+${parts[1]} skill cap` : 'Skill cap boost';
-        }
-        return 'Skill cap boost';
-      case 'passiveGen':
-        if (typeof item.value === 'string') {
-          const parts = item.value.split(':');
-          return parts.length === 2 ? `+${parts[1]}/sec` : 'Passive gen';
-        }
-        return 'Passive gen';
-      case 'actionBonus':
-        if (typeof item.value === 'string') {
-          const parts = item.value.split(':');
-          return parts.length === 2 ? `+${parts[1]}% ${parts[0]} action bonus` : `+${item.value}% action bonus`;
-        }
-        return `+${item.value}% action bonus`;
-      case 'combatDamage':
-        return `+${item.value} damage`;
-      case 'healthRegen':
-        return `+${item.value} health/sec`;
-      case 'spellCooldown':
-        return `-${item.value}% cooldown`;
-      default:
-        return 'Unknown effect';
-    }
-  })();
+  const effectString = formatEffectDescription(item as HousingItemDefinition);
 
   const tooltipData = {
     name: item.name,

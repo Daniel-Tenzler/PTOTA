@@ -9,6 +9,8 @@ import type {
   HouseDefinition,
   HousingItemDefinition,
 } from '../types';
+import { canAfford } from './resources';
+import { parseEffectValue } from '../utils/housingEffects';
 
 /**
  * Calculates the total space capacity of a house.
@@ -41,25 +43,7 @@ export function getSpaceUsed(state: GameState, houseId: string, getItemDef: (ite
  * @returns True if the player can afford the house
  */
 export function canAffordHouse(state: GameState, house: HouseDefinition): boolean {
-  for (const [resourceId, cost] of Object.entries(house.cost)) {
-    // Check standard resources
-    if (resourceId in state.resources) {
-      if ((state.resources as Record<string, number>)[resourceId] < cost) {
-        return false;
-      }
-    }
-    // Check special resources (excluding stamina and health which use nested structure)
-    else if (resourceId === 'stamina') {
-      if (state.specialResources.stamina.current < cost) {
-        return false;
-      }
-    } else if (resourceId === 'health') {
-      if (state.specialResources.health.current < cost) {
-        return false;
-      }
-    }
-  }
-  return true;
+  return canAfford(state, house.cost);
 }
 
 /**
@@ -69,25 +53,7 @@ export function canAffordHouse(state: GameState, house: HouseDefinition): boolea
  * @returns True if the player can afford the item
  */
 export function canAffordItem(state: GameState, item: HousingItemDefinition): boolean {
-  for (const [resourceId, cost] of Object.entries(item.cost)) {
-    // Check standard resources
-    if (resourceId in state.resources) {
-      if ((state.resources as Record<string, number>)[resourceId] < cost) {
-        return false;
-      }
-    }
-    // Check special resources (excluding stamina and health which use nested structure)
-    else if (resourceId === 'stamina') {
-      if (state.specialResources.stamina.current < cost) {
-        return false;
-      }
-    } else if (resourceId === 'health') {
-      if (state.specialResources.health.current < cost) {
-        return false;
-      }
-    }
-  }
-  return true;
+  return canAfford(state, item.cost);
 }
 
 /**
@@ -122,60 +88,27 @@ export function getHousingBonuses(
 
       // Apply bonuses based on effect type
       switch (item.effect) {
-        case 'skillCap':
-          // value should be a string like "arcane:10" for skill-specific bonuses
-          if (typeof item.value === 'string') {
-            const parts = item.value.split(':');
-            if (parts.length === 2) {
-              const [skillId, bonusAmount] = parts;
-              const bonusValue = parseInt(bonusAmount, 10);
-              if (!isNaN(bonusValue)) {
-                if (!bonuses.skillCap[skillId]) {
-                  bonuses.skillCap[skillId] = 0;
-                }
-                bonuses.skillCap[skillId] += bonusValue;
-              }
-            }
-          } else {
-            bonuses.skillCap['all'] = (bonuses.skillCap['all'] || 0) + (typeof item.value === 'number' ? item.value : 0);
-          }
+        case 'skillCap': {
+          const { skillId, amount } = parseEffectValue(item.value);
+          const targetKey = skillId || 'all';
+          bonuses.skillCap[targetKey] = (bonuses.skillCap[targetKey] || 0) + amount;
           break;
+        }
 
-        case 'passiveGen':
-          // value should be a string like "gold:0.5" for resource generation
-          if (typeof item.value === 'string') {
-            const parts = item.value.split(':');
-            if (parts.length === 2) {
-              const [resourceId, amount] = parts;
-              const genValue = parseFloat(amount);
-              if (!isNaN(genValue)) {
-                if (!bonuses.passiveGen[resourceId]) {
-                  bonuses.passiveGen[resourceId] = 0;
-                }
-                bonuses.passiveGen[resourceId] += genValue;
-              }
-            }
+        case 'passiveGen': {
+          const { skillId: resourceId, amount } = parseEffectValue(item.value);
+          if (resourceId) {
+            bonuses.passiveGen[resourceId] = (bonuses.passiveGen[resourceId] || 0) + amount;
           }
           break;
+        }
 
-        case 'actionBonus':
-          // value should be a string like "arcane:0.15" or a number for global bonus
-          if (typeof item.value === 'string') {
-            const parts = item.value.split(':');
-            if (parts.length === 2) {
-              const [skillId, bonusAmount] = parts;
-              const bonusValue = parseFloat(bonusAmount);
-              if (!isNaN(bonusValue)) {
-                if (!bonuses.actionBonus[skillId]) {
-                  bonuses.actionBonus[skillId] = 0;
-                }
-                bonuses.actionBonus[skillId] += bonusValue;
-              }
-            }
-          } else {
-            bonuses.actionBonus['all'] = (bonuses.actionBonus['all'] || 0) + (typeof item.value === 'number' ? item.value : 0);
-          }
+        case 'actionBonus': {
+          const { skillId, amount } = parseEffectValue(item.value);
+          const targetKey = skillId || 'all';
+          bonuses.actionBonus[targetKey] = (bonuses.actionBonus[targetKey] || 0) + amount;
           break;
+        }
 
         case 'combatDamage':
           bonuses.combatDamage += typeof item.value === 'number' ? item.value : 0;

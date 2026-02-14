@@ -1,6 +1,7 @@
 import type { GameState } from '../../types';
 import { canAffordHouse, canAffordItem, getSpaceUsed } from '../../systems/housing';
 import { HOUSE_DEFS, HOUSING_ITEM_DEFS } from '../../data/housing';
+import { deductCost } from '../../systems/resources';
 
 export interface GameHousingSlice {
   purchaseHouse: (houseId: string) => void;
@@ -21,23 +22,11 @@ export const createHousingSlice = (
     if (state.housing.ownedHouses.includes(houseId)) return;
     if (!canAffordHouse(state, house)) return;
 
-    // Deduct costs
-    const newResources = { ...state.resources };
-    const newSpecialResources = { ...state.specialResources };
-
-    for (const [resourceId, cost] of Object.entries(house.cost)) {
-      if (resourceId in newResources) {
-        newResources[resourceId] -= cost;
-      } else if (resourceId === 'stamina') {
-        newSpecialResources.stamina.current -= cost;
-      } else if (resourceId === 'health') {
-        newSpecialResources.health.current -= cost;
-      }
-    }
+    // Deduct costs using centralized function
+    const costUpdates = deductCost(state, house.cost);
 
     set({
-      resources: newResources,
-      specialResources: newSpecialResources,
+      ...costUpdates,
       housing: {
         ...state.housing,
         ownedHouses: [...state.housing.ownedHouses, houseId],
@@ -68,23 +57,11 @@ export const createHousingSlice = (
     // Get current equipped items for this house
     const equippedItems = state.housing.equippedItems[houseId] || [];
 
-    // Deduct costs
-    const newResources = { ...state.resources };
-    const newSpecialResources = { ...state.specialResources };
-
-    for (const [resourceId, cost] of Object.entries(item.cost)) {
-      if (resourceId in newResources) {
-        newResources[resourceId] -= cost;
-      } else if (resourceId === 'stamina') {
-        newSpecialResources.stamina.current -= cost;
-      } else if (resourceId === 'health') {
-        newSpecialResources.health.current -= cost;
-      }
-    }
+    // Deduct costs using centralized function
+    const costUpdates = deductCost(state, item.cost);
 
     set({
-      resources: newResources,
-      specialResources: newSpecialResources,
+      ...costUpdates,
       housing: {
         ...state.housing,
         equippedItems: {

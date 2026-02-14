@@ -4,27 +4,20 @@ import { ActiveTimedActionDisplay } from './ActiveTimedActionDisplay';
 import { ResourceIcon } from './ResourceIcon';
 import { RESOURCE_CONFIG } from '../../config/resources';
 
-// Static color mappings - required for Tailwind JIT to detect class names
-const TEXT_COLOR_MAP: Record<string, string> = {
-  yellow: 'text-yellow-400',
-  stone: 'text-stone-400',
-  purple: 'text-purple-400',
-  gray: 'text-gray-400',
-  cyan: 'text-cyan-400',
-  orange: 'text-orange-400',
-  amber: 'text-amber-400',
-  emerald: 'text-emerald-400',
-};
-
-const BG_COLOR_MAP: Record<string, string> = {
-  yellow: 'bg-yellow-500',
-  stone: 'bg-stone-500',
-  purple: 'bg-purple-500',
-  gray: 'bg-gray-500',
-  cyan: 'bg-cyan-500',
-  orange: 'bg-orange-500',
-  amber: 'bg-amber-500',
-  emerald: 'bg-emerald-500',
+/**
+ * Static color mappings for resources.
+ * NOTE: These literal class names are required for Tailwind JIT to detect and include them in the build.
+ * Dynamic class construction (like `text-${color}-400`) would not work with Tailwind's JIT mode.
+ */
+const RESOURCE_COLOR_CONFIG: Record<string, { text: string; bg: string }> = {
+  yellow: { text: 'text-yellow-400', bg: 'bg-yellow-500' },
+  stone: { text: 'text-stone-400', bg: 'bg-stone-500' },
+  purple: { text: 'text-purple-400', bg: 'bg-purple-500' },
+  gray: { text: 'text-gray-400', bg: 'bg-gray-500' },
+  cyan: { text: 'text-cyan-400', bg: 'bg-cyan-500' },
+  orange: { text: 'text-orange-400', bg: 'bg-orange-500' },
+  amber: { text: 'text-amber-400', bg: 'bg-amber-500' },
+  emerald: { text: 'text-emerald-400', bg: 'bg-emerald-500' },
 };
 
 // Define display order for resources. Any resource added to the store
@@ -103,7 +96,9 @@ export function ResourcePanel() {
 function ResourceRow({ resourceId, name, value }: { resourceId: string; name: string; value: number }) {
   const displayValue = value < 10 ? parseFloat(value.toFixed(1)) : Math.floor(value);
   const config = RESOURCE_CONFIG[resourceId];
-  const colorClass = config?.color && TEXT_COLOR_MAP[config.color] ? TEXT_COLOR_MAP[config.color] : 'text-gray-400';
+  const colorClass = config?.color && RESOURCE_COLOR_CONFIG[config.color]
+    ? RESOURCE_COLOR_CONFIG[config.color].text
+    : 'text-gray-400';
 
   return (
     <div className="flex justify-between items-center">
@@ -119,7 +114,9 @@ function ResourceRow({ resourceId, name, value }: { resourceId: string; name: st
 function SpecialResourceRow({ resourceId, name, current, max }: { resourceId: string; name: string; current: number; max: number }) {
   const percent = (current / max) * 100;
   const config = RESOURCE_CONFIG[resourceId];
-  const barColorClass = config?.color && BG_COLOR_MAP[config.color] ? BG_COLOR_MAP[config.color] : 'bg-gray-600';
+  const barColorClass = config?.color && RESOURCE_COLOR_CONFIG[config.color]
+    ? RESOURCE_COLOR_CONFIG[config.color].bg
+    : 'bg-gray-600';
 
   return (
     <div>

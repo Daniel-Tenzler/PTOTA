@@ -1,5 +1,5 @@
 export { canExecuteAction, executeAction } from './actions';
-export { updateSpecialResources } from './resources';
+export { updateSpecialResources, deductCost, canAfford } from './resources';
 export { checkSkillLevelUps, getSkillProgress } from './skills';
 export { updateSpells, castSpell, canCastSpell } from './spells';
 export { startCombat, stopCombat, updateCombat } from './combat';
