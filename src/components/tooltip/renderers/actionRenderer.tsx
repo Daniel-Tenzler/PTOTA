@@ -1,16 +1,29 @@
 import { TooltipSection, ResourceList, StatRow } from '../layout';
 import { formatNum } from '../../../utils/format';
-import type { ActionDefinition, ActionState } from '../../../types';
+import type { ActionDefinition, ActionState, GameState } from '../../../types';
+
+type ActionRendererGameState = Pick<GameState, 'resources' | 'specialResources' | 'skills'>;
 
 interface ActionRendererProps {
   definition: ActionDefinition;
   state: ActionState;
+  gameState: ActionRendererGameState;
 }
 
-export function actionRenderer({ definition, state }: ActionRendererProps) {
+export function actionRenderer({ definition, state, gameState }: ActionRendererProps) {
   const hasRankBonus = state.executionCount >= 10;
   const bonusPercent = definition.rankBonus(state.executionCount);
   const isUnlock = definition.category === 'unlock';
+
+  // Check which resources are available for coloring
+  const currentResources = gameState.resources;
+  const currentStamina = gameState.specialResources.stamina.current;
+  const currentSkills = gameState.skills;
+
+  // Check if skill requirement is met
+  const skillRequirementMet = !definition.requiredSkill || (
+    (currentSkills[definition.requiredSkill.skillId]?.level || 0) >= definition.requiredSkill.level
+  );
 
   return (
     <div className="space-y-3">
@@ -19,22 +32,26 @@ export function actionRenderer({ definition, state }: ActionRendererProps) {
       {/* Requirements */}
       {Object.entries(definition.inputs).length > 0 && !isUnlock ? (
         <TooltipSection label="Cost">
-          <ResourceList resources={definition.inputs} />
+          <ResourceList resources={definition.inputs} currentResources={currentResources} />
         </TooltipSection>
       ) : null}
 
       {definition.unlockCost && Object.entries(definition.unlockCost).length > 0 ? (
         <TooltipSection label="Unlock Cost">
-          <ResourceList resources={definition.unlockCost} />
+          <ResourceList resources={definition.unlockCost} currentResources={currentResources} />
         </TooltipSection>
       ) : null}
 
       {definition.staminaCost && definition.staminaCost > 0 ? (
-        <StatRow label="Stamina" value={definition.staminaCost} />
+        <StatRow
+          label="Stamina"
+          value={definition.staminaCost}
+          requirementMet={currentStamina >= definition.staminaCost}
+        />
       ) : null}
 
       {definition.requiredSkill ? (
-        <div className="text-xs text-gray-500">
+        <div className={`text-xs ${skillRequirementMet ? 'text-gray-500' : 'text-red-500'}`}>
           Requires: {definition.requiredSkill.skillId} level {definition.requiredSkill.level}
         </div>
       ) : null}

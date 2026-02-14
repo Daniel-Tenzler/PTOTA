@@ -7,6 +7,7 @@ export const SPELL_DEFS: Record<string, SpellDefinition> = {
     description: 'Deals 10 fire damage',
     cooldown: 5, // seconds
     effect: () => 10,
+    icon: 'Flame',
   },
   'ice-shard': {
     id: 'ice-shard',
@@ -14,5 +15,6 @@ export const SPELL_DEFS: Record<string, SpellDefinition> = {
     description: 'Deals 7 ice damage',
     cooldown: 3,
     effect: () => 7,
+    icon: 'Snowflake',
   },
 };

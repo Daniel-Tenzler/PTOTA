@@ -22,6 +22,9 @@ export function ActionButton({ actionId }: Props) {
   const isUnlock = definition.category === 'unlock';
 
   const handleClick = () => {
+    // Don't execute if can't afford it
+    if (!canExec && !isActive) return;
+
     if (isTimed) {
       toggleTimedAction(actionId);
     } else {
@@ -56,6 +59,7 @@ export function ActionButton({ actionId }: Props) {
     () => ({
       definition,
       state: actionState || createActionState(true),
+      gameState: useGameStore.getState(),
     }),
     [definition, actionState]
   );
@@ -70,14 +74,13 @@ export function ActionButton({ actionId }: Props) {
       <button
         {...triggerProps}
         onClick={handleClick}
-        disabled={!canExec && !isActive}
         className={`
           px-3 py-1.5 rounded text-sm font-medium transition-colors whitespace-nowrap
           ${isActive
             ? 'bg-green-900/80 border border-green-700 text-green-100'
             : canExec
               ? 'bg-gray-800 hover:bg-gray-700 text-gray-200'
-              : 'bg-gray-900/50 text-gray-600'
+              : 'bg-gray-900/50 text-gray-600 border border-red-900/50'
           }
         `}
       >

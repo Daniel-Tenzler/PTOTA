@@ -1,5 +1,5 @@
 import type { ActionDefinition } from '../types';
-import { standardRankBonus, noRankBonus } from '../utils/rankBonus';
+import { standardRankBonus, noRankBonus, timedRankBonus } from '../utils/rankBonus';
 
 /**
  * Action factory functions.
@@ -59,7 +59,7 @@ function createTimedAction(config: {
     staminaCost: 1,
     duration: config.duration,
     skillXp: { [config.skillId]: config.xp ?? 1 },
-    rankBonus: standardRankBonus,
+    rankBonus: timedRankBonus,
   };
 }
 
@@ -118,6 +118,15 @@ const RESOURCE_ACTIONS: Omit<ActionDefinition, 'rankBonus'>[] = [
     name: 'Gain Gold',
     outputs: { gold: 1 },
     skillId: 'arcane',
+  }),
+  createTimedAction({
+    id: 'hunt',
+    name: 'Hunt',
+    inputs: {},
+    outputs: { gold: 1 },
+    duration: 1.5,
+    skillId: 'arcane',
+    xp: 1,
   }),
   createResourceAction({
     id: 'write-scrolls',

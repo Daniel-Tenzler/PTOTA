@@ -8,6 +8,7 @@ import { ALL_ACTION_DEFS } from '../systems/actions';
  */
 export const STARTER_ACTIONS = new Set([
   'gain-gold',
+  'hunt',
   'write-scrolls',
   'meditate',
   'learn-spellcasting',

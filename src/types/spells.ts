@@ -10,6 +10,7 @@ export interface SpellDefinition {
   description: string;
   cooldown: number;
   effect: (state: GameState) => number;
+  icon?: string;
 }
 
 export interface SpellState {

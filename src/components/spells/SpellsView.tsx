@@ -11,8 +11,15 @@ export function SpellsView() {
     <div>
       <h2 className="text-xl font-semibold text-gray-100 mb-6">Spells</h2>
 
-      <EquippedSpellsView spells={spells} onUnequip={unequipSpell} />
-      <AvailableSpellsView spells={spells} onEquip={equipSpell} />
+      <div className="flex gap-6">
+        <div className="flex-1">
+          <AvailableSpellsView spells={spells} onEquip={equipSpell} />
+        </div>
+        <div className="border-l border-gray-700" />
+        <div className="flex-1">
+          <EquippedSpellsView spells={spells} onUnequip={unequipSpell} />
+        </div>
+      </div>
     </div>
   );
 }

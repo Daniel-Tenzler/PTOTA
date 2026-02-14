@@ -1,5 +1,6 @@
 import { SPELL_DEFS } from '../../data/spells';
-import SpellItem from './SpellItem';
+import { AVAILABLE_SPELLS_GRID_COLUMNS } from '../../constants/ui';
+import { SpellItem } from './SpellItem';
 import type { SpellState } from '../../types';
 
 interface AvailableSpellsViewProps {
@@ -14,7 +15,7 @@ export function AvailableSpellsView({ spells, onEquip }: AvailableSpellsViewProp
   return (
     <div>
       <h3 className="text-sm text-gray-400 mb-3">Available Spells</h3>
-      <div className="grid gap-2">
+      <div className={`grid grid-cols-${AVAILABLE_SPELLS_GRID_COLUMNS} gap-2`}>
         {availableSpells.map((spell) => {
           const isEquipped = equipped.includes(spell.id);
           const canEquip = !isEquipped && equipped.length < slots;
